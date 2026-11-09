@@ -1,14 +1,14 @@
 <?php
 	session_start();
-	include 'php_functions.php';
+	require_once 'functions/HealthSystem.php';
 
-	$leaveRequest = new LeaveRequest();
+	$healthSystem = new HealthSystem();
 
 	if(isset($_POST['login_btn'])){
 		$username = $_POST['username'];
 		$password = $_POST['password'];
 
-		$result = $leaveRequest->login($username, $password);
+		$result = $	$healthSystem->login($username, $password);
 
 		if(mysqli_num_rows($result)<1){
 			echo "<script>alert('No accounts'); </script>";
