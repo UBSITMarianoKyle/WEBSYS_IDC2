@@ -6,36 +6,52 @@ session_start();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="css/style.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 	<title>Welcome | Barangay Ambiong Health System</title>
 </head>
-<body>
-
-<section class="hero">
-	<p class="eyebrow">Barangay Ambiong, La Trinidad, Benguet</p>
-	<h1>Barangay Health Services and<br>Community Health Monitoring System</h1>
-	<p>Keep resident health records, vaccinations, maternal and child care, medicine stock and clinic appointments in one place.</p>
-	<div class="cta">
-		<a class="btn big" href="login.php">Login</a>
-		<a class="btn big alt2" href="register.php">Register as a Resident</a>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+	<div class="container">
+		<a class="navbar-brand fw-semibold" href="index.php">Barangay Ambiong Health System</a>
+		<div class="d-flex gap-2">
+			<a class="btn btn-outline-light" href="login.php">Login</a>
+			<a class="btn btn-light text-success" href="register.php">Register</a>
+		</div>
 	</div>
-</section>
-
-<section class="features">
-	<div class="feature"><h3>Resident Registration</h3><p>Household and resident records with health profile and emergency contact.</p></div>
-	<div class="feature"><h3>Consultations</h3><p>Symptoms, health worker assessment and full consultation history.</p></div>
-	<div class="feature"><h3>Vaccination</h3><p>Vaccine records, next schedules and completion status.</p></div>
-	<div class="feature"><h3>Maternal and Child Health</h3><p>Pregnancy registry, prenatal visits and child growth monitoring.</p></div>
-	<div class="feature"><h3>Medicine Inventory</h3><p>Stock-in, stock-out, distribution records and low-stock alerts.</p></div>
-	<div class="feature"><h3>Appointments</h3><p>Request a visit online and get an approved schedule.</p></div>
-</section>
-
-<section class="who">
-	<h2>Who uses the system</h2>
-	<p>System Administrator &middot; Barangay Health Worker &middot; Health Center Nurse &middot; Municipal Health Officer &middot; Residents and Patients</p>
-	<p class="muted">Staff accounts are created by the System Administrator. Residents can register their own account.</p>
-</section>
-
-<footer class="foot">Barangay Ambiong, La Trinidad, Benguet &middot; Health Services and Community Health Monitoring System</footer>
+</nav>
+<main>
+	<section class="bg-success text-white py-5">
+		<div class="container py-lg-4">
+			<p class="text-uppercase fw-semibold mb-2">Barangay Ambiong, La Trinidad, Benguet</p>
+			<h1 class="display-5 fw-bold">Health services and community health monitoring</h1>
+			<p class="lead col-lg-8 mt-3">Keep resident health records, vaccinations, maternal and child care, medicine stock, and clinic appointments in one place.</p>
+			<div class="d-flex flex-wrap gap-2 mt-4">
+				<a class="btn btn-light btn-lg text-success" href="login.php">Login</a>
+				<a class="btn btn-outline-light btn-lg" href="register.php">Register as a Resident</a>
+			</div>
+		</div>
+	</section>
+	<section class="container py-5">
+		<h2 class="h3 mb-4">Health services</h2>
+		<div class="row g-3">
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Resident Registration</h3><p class="card-text text-body-secondary">Household and resident records with health profiles and emergency contacts.</p></div></article></div>
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Consultations</h3><p class="card-text text-body-secondary">Symptoms, health worker assessment, and consultation history.</p></div></article></div>
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Vaccination</h3><p class="card-text text-body-secondary">Vaccine records, upcoming schedules, and completion status.</p></div></article></div>
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Maternal and Child Health</h3><p class="card-text text-body-secondary">Pregnancy registry, prenatal visits, and child growth monitoring.</p></div></article></div>
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Medicine Inventory</h3><p class="card-text text-body-secondary">Stock movements, distribution records, and low-stock alerts.</p></div></article></div>
+			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Appointments</h3><p class="card-text text-body-secondary">Request clinic visits and receive an approved schedule.</p></div></article></div>
+		</div>
+	</section>
+	<section class="bg-white border-top py-4">
+		<div class="container">
+			<h2 class="h4">Who uses the system</h2>
+			<p class="mb-1">System administrators, barangay health workers, health center nurses, municipal health officers, residents, and patients.</p>
+			<p class="text-body-secondary mb-0">Staff accounts are created by the System Administrator. Residents can register their own account.</p>
+		</div>
+	</section>
+</main>
+<footer class="container py-4 text-center text-body-secondary">
+	Barangay Ambiong, La Trinidad, Benguet &middot; Health Services and Community Health Monitoring System
+</footer>
 </body>
 </html>
