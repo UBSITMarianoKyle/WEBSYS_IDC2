@@ -1,42 +1,64 @@
 <?php
-	session_start();
-	require_once 'functions/HealthSystem.php';
+    session_start();
+    require_once 'functions/HealthSystem.php';
 
-	$healthSystem = new HealthSystem();
+    $healthSystem = new HealthSystem($pdo);
 
-	if(isset($_POST['login_btn'])){
-		$username = $_POST['username'];
-		$password = $_POST['password'];
+    if(isset($_POST['login_btn'])){
+        $username = $_POST['username'];
+        $password = $_POST['password'];
 
-		$result = $healthSystem->login($username, $password);
+        $result = $healthSystem->login($username);
 
-		if(mysqli_num_rows($result)<1){
-			echo "<script>alert('No accounts'); </script>";
-		}
-		else{
-			while($row = mysqli_fetch_assoc($result)){
-				if($password == $row['password'] && $row['role'] == "admin"){
-					$_SESSION["USERNAME"] = $row['username'];
-					$_SESSION["FNAME"] = $row['firstname'];
-					$_SESSION["LNAME"] = $row['lastname'];
-					$_SESSION["ROLE"] = $row['role'];
+        if(!$result){
+            echo "<script>alert('No accounts');</script>";
+        }
+        else{
+            if(password_verify($password, $result['password']) && $result['role'] == "admin"){
+                $_SESSION["ID"] = $result['user_id'];
+                $_SESSION["USERNAME"] = $result['username'];
+                $_SESSION["ROLE"] = $result['role'];
 
-					header("location:admin.php");
-				}
-				else if($password == $row['password'] && $row['role'] == "student"){
-					$_SESSION["USERNAME"] = $row['username'];
-					$_SESSION["FNAME"] = $row['firstname'];
-					$_SESSION["LNAME"] = $row['lastname'];
-					$_SESSION["ROLE"] = $row['role'];
+                header("location:admin/index.php");
+                exit;
+            }
+            else if(password_verify($password, $result['password']) && $result['role'] == "bhw"){
+                $_SESSION["ID"] = $result['user_id'];
+                $_SESSION["USERNAME"] = $result['username'];
+                $_SESSION["ROLE"] = $result['role'];
 
-					header("location:index.php");
-				}
-				else{
-					echo "<script>alert('Wrong password'); </script>";
-				}
-			}
-		}
-	}
+                header("location:bhw/index.php");
+                exit;
+            }
+            else if(password_verify($password, $result['password']) && $result['role'] == "nurse"){
+                $_SESSION["ID"] = $result['user_id'];
+                $_SESSION["USERNAME"] = $result['username'];
+                $_SESSION["ROLE"] = $result['role'];
+
+                header("location:nurse/index.php");
+                exit;
+            }
+            else if(password_verify($password, $result['password']) && $result['role'] == "mho"){
+                $_SESSION["ID"] = $result['user_id'];
+                $_SESSION["USERNAME"] = $result['username'];
+                $_SESSION["ROLE"] = $result['role'];
+
+                header("location:mho/index.php");
+                exit;
+            }
+            else if(password_verify($password, $result['password']) && $result['role'] == "resident"){
+                $_SESSION["ID"] = $result['user_id'];
+                $_SESSION["USERNAME"] = $result['username'];
+                $_SESSION["ROLE"] = $result['role'];
+
+                header("location:resident/index.php");
+                exit;
+            }
+            else{
+                echo "<script>alert('Wrong password');</script>";
+            }
+        }
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,3 +100,4 @@
 
 </body>
 </html>
+
