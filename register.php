@@ -1,15 +1,14 @@
 <?php
 session_start();
-require_once __DIR__ . "/config/dbconn.php";
+require_once __DIR__ . "/dbconn.php";
+require_once __DIR__ . "/functions/HealthSystem.php";
+$healthSystem = new HealthSystem($pdo);
 
 if (!isset($_SESSION["csrf_token"])) {
 	$_SESSION["csrf_token"] = bin2hex(random_bytes(32));
 }
 
-$householdQuery = $pdo->query(
-	"SELECT id, CONCAT(household_no, ' - ', purok) AS label FROM households ORDER BY household_no"
-);
-$households = $householdQuery->fetchAll();
+$households = $healthSystem->households();
 $error = null;
 $form = [
 	"household_id" => "",
@@ -59,46 +58,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 	} else {
 		$password = (string) $_POST["password"];
 		try {
-			$pdo->beginTransaction();
-			$residentQuery = $pdo->prepare(
-				"INSERT INTO residents
-					(household_id, first_name, last_name, birthdate, sex, contact, emergency_name, emergency_relation, emergency_contact)
-				 VALUES
-					(:household_id, :first_name, :last_name, :birthdate, :sex, :contact, :emergency_name, :emergency_relation, :emergency_contact)"
-			);
-			$residentQuery->execute([
-				"household_id" => (int) $form["household_id"],
-				"first_name" => $form["first_name"],
-				"last_name" => $form["last_name"],
-				"birthdate" => $form["birthdate"],
-				"sex" => $form["sex"],
-				"contact" => $form["contact"] !== "" ? $form["contact"] : null,
-				"emergency_name" => $form["emergency_name"],
-				"emergency_relation" => $form["emergency_relation"],
-				"emergency_contact" => $form["emergency_contact"],
-			]);
-			$residentId = $pdo->lastInsertId();
-
-			$userQuery = $pdo->prepare(
-				"INSERT INTO users (username, password, full_name, role, resident_id)
-				 VALUES (:username, :password, :full_name, 'resident', :resident_id)"
-			);
-			$userQuery->execute([
-				"username" => $form["username"],
-				"password" => password_hash($password, PASSWORD_DEFAULT),
-				"full_name" => $form["first_name"] . " " . $form["last_name"],
-				"resident_id" => $residentId,
-			]);
-			$pdo->commit();
+			$healthSystem->registerResident($form, $form["username"], $password);
 
 			$_SESSION["registration_success"] = "Account created. You can now log in.";
 			header("Location: login.php");
 			exit;
 		} catch (PDOException $exception) {
-			if ($pdo->inTransaction()) {
-				$pdo->rollBack();
-			}
-
 			if ($exception->getCode() === "23000") {
 				$error = "That username is already taken, or the selected household is no longer available.";
 			} else {

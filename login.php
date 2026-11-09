@@ -1,6 +1,8 @@
 <?php
 session_start();
-require_once __DIR__ . "/config/dbconn.php";
+require_once __DIR__ . "/dbconn.php";
+require_once __DIR__ . "/functions/HealthSystem.php";
+$healthSystem = new HealthSystem($pdo);
 
 $rolePages = [
 	"admin" => "admin/index.php",
@@ -38,24 +40,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 		$username = trim((string) ($_POST["username"] ?? ""));
 		$password = (string) ($_POST["password"] ?? "");
-		$query = $pdo->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
-		$query->execute(["username" => $username]);
-		$user = $query->fetch();
-		$storedPassword = is_array($user)
-			? ($user["password_hash"] ?? $user["password"] ?? null)
-			: null;
+		$user = $healthSystem->login($username, $password);
 
 		if (
 			$user
-			&& is_string($storedPassword)
-			&& password_verify($password, $storedPassword)
 			&& isset($rolePages[$user["role"] ?? ""])
 		) {
 			session_regenerate_id(true);
 			$_SESSION["USER_ID"] = $user["id"] ?? null;
 			$_SESSION["USERNAME"] = $user["username"];
-			$_SESSION["FNAME"] = $user["firstname"] ?? $user["first_name"] ?? "";
-			$_SESSION["LNAME"] = $user["lastname"] ?? $user["last_name"] ?? "";
+			$_SESSION["FNAME"] = $user["firstname"] ?? $user["resident_first_name"] ?? "";
+			$_SESSION["LNAME"] = $user["lastname"] ?? $user["resident_last_name"] ?? "";
 			$_SESSION["ROLE"] = $user["role"];
 			$_SESSION["RESIDENT_ID"] = $user["resident_id"] ?? null;
 			unset($_SESSION["fails"], $_SESSION["lock_until"]);
