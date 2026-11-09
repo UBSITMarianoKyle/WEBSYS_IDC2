@@ -1,16 +1,8 @@
 <?php
-session_start();
-require_once __DIR__ . "/dbconn.php";
-require_once __DIR__ . "/functions/HealthSystem.php";
-$healthSystem = new HealthSystem($pdo);
+	session_start();
+	require_once 'functions/HealthSystem.php';
 
-$rolePages = [
-	"admin" => "admin/index.php",
-	"bhw" => "bhw/index.php",
-	"nurse" => "nurse/index.php",
-	"mho" => "mho/index.php",
-	"resident" => "resident/index.php",
-];
+	$healthSystem = new HealthSystem();
 
 $sessionRole = $_SESSION["ROLE"] ?? null;
 if (is_string($sessionRole) && isset($rolePages[$sessionRole])) {
@@ -18,9 +10,7 @@ if (is_string($sessionRole) && isset($rolePages[$sessionRole])) {
 	exit;
 }
 
-if (!isset($_SESSION["csrf_token"])) {
-	$_SESSION["csrf_token"] = bin2hex(random_bytes(32));
-}
+		$result = $	$healthSystem->login($username, $password);
 
 $error = null;
 $success = $_SESSION["registration_success"] ?? null;
