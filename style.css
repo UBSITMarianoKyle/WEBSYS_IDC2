@@ -1,0 +1,324 @@
+
+/* ===================================
+   BARANGAY TAWANG HEALTH SYSTEM
+   MAIN STYLESHEET
+=================================== */
+
+/* COLORS */
+:root {
+    --primary-yellow: #FFEB00;
+    --primary-blue: #123B70;
+    --dark-blue: #0B284D;
+    --accent-red: #E92435;
+    --light-bg: #F8F9FA;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+}
+
+/* GENERAL */
+body {
+    background-color: var(--light-bg);
+    font-family: Arial, sans-serif;
+    color: var(--text-dark);
+}
+
+/* ===================================
+   NAVIGATION BAR
+=================================== */
+
+.navbar {
+    background-color: var(--primary-yellow) !important;
+    padding: 10px 0;
+    border-bottom: 3px solid var(--primary-blue);
+}
+
+.navbar-brand {
+    color: var(--primary-blue) !important;
+    font-size: 18px;
+    font-weight: 700;
+    white-space: normal;
+}
+
+.navbar-brand:hover {
+    color: var(--dark-blue) !important;
+}
+
+.barangay-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    background-color: white;
+    flex-shrink: 0;
+}
+
+/* NAVBAR BUTTONS */
+
+.navbar .btn-outline-light {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    background-color: transparent;
+}
+
+.navbar .btn-outline-light:hover {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.navbar .btn-light {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white !important;
+}
+
+.navbar .btn-light:hover {
+    background-color: var(--dark-blue);
+    border-color: var(--dark-blue);
+    color: white !important;
+}
+
+/* ===================================
+   WELCOME / HERO SECTION
+=================================== */
+
+.hero-section {
+    background-color: var(--primary-blue) !important;
+    color: white;
+    padding: 35px 0;
+}
+
+.hero-section h1 {
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 15px;
+}
+
+.hero-section p {
+    font-size: 17px;
+    line-height: 1.6;
+    max-width: 750px;
+    margin-bottom: 20px;
+}
+
+/* HERO BUTTONS */
+
+.hero-section .btn-light {
+    background-color: var(--primary-yellow);
+    border-color: var(--primary-yellow);
+    color: var(--primary-blue) !important;
+    font-weight: 600;
+}
+
+.hero-section .btn-light:hover {
+    background-color: #E6D400;
+    border-color: #E6D400;
+    color: var(--dark-blue) !important;
+}
+
+.hero-section .btn-outline-light {
+    border-color: white;
+    color: white;
+}
+
+.hero-section .btn-outline-light:hover {
+    background-color: white;
+    border-color: white;
+    color: var(--primary-blue);
+}
+
+/* ===================================
+   SECTION HEADINGS
+=================================== */
+
+.section-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 8px;
+}
+
+.section-description {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* ===================================
+   HEALTH SERVICE CARDS
+=================================== */
+
+.service-card {
+    background-color: white;
+    border: 1px solid #E9ECEF;
+    border-radius: 10px;
+    height: 100%;
+    overflow: hidden;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-yellow);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.10) !important;
+}
+
+.service-card .card-body {
+    padding: 24px;
+}
+
+.service-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 12px;
+}
+
+.service-card p {
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* ===================================
+   SYSTEM USERS SECTION
+=================================== */
+
+.users-section {
+    background-color: white;
+    border-top: 1px solid #DEE2E6;
+}
+
+.user-card {
+    background-color: white;
+    border: 1px solid #E9ECEF;
+    border-radius: 10px;
+    height: 100%;
+}
+
+.user-card .card-body {
+    padding: 24px;
+}
+
+.user-card h3 {
+    color: var(--primary-blue);
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.user-card p,
+.user-card li {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.user-card ul {
+    padding-left: 20px;
+}
+
+/* ===================================
+   FOOTER
+=================================== */
+
+footer {
+    font-size: 14px;
+    color: var(--primary-blue);
+    border-top: 3px solid var(--primary-yellow);
+}
+
+footer p {
+    margin-bottom: 5px;
+}
+
+/* ===================================
+   TABLET RESPONSIVENESS
+=================================== */
+
+@media (max-width: 768px) {
+
+    .navbar-brand {
+        font-size: 16px;
+    }
+
+    .hero-section {
+        padding: 30px 0;
+    }
+
+    .hero-section h1 {
+        font-size: 30px;
+    }
+
+    .section-title {
+        font-size: 24px;
+    }
+
+}
+
+/* ===================================
+   MOBILE RESPONSIVENESS
+=================================== */
+
+@media (max-width: 576px) {
+
+    .navbar .container {
+        gap: 12px;
+    }
+
+    .navbar-brand {
+        font-size: 15px;
+        max-width: 100%;
+    }
+
+    .barangay-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .navbar .btn {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+
+    .hero-section {
+        padding: 25px 0;
+    }
+
+    .hero-section h1 {
+        font-size: 26px;
+    }
+
+    .hero-section p {
+        font-size: 15px;
+    }
+
+    .section-title {
+        font-size: 23px;
+    }
+
+    .section-description {
+        font-size: 14px;
+    }
+
+    .service-card .card-body,
+    .user-card .card-body {
+        padding: 20px;
+    }
+
+    .service-card h3,
+    .user-card h3 {
+        font-size: 17px;
+    }
+
+    footer {
+        font-size: 12px;
+    }
+
+}
