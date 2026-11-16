@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../HealthSystem.php';
 
+// Only the administrator can open this page.
 if (!isset($_SESSION['ID']) || ($_SESSION['ROLE'] ?? '') != 'admin') {
     header('Location: ../login.php');
     exit();
@@ -28,6 +29,7 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
             font-family: Arial, sans-serif;
         }
 
+        /* NAVBAR */
         .navbar {
             background-color: #FFEB00;
             border-bottom: 3px solid #123B70;

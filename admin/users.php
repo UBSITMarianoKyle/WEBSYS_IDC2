@@ -2,7 +2,7 @@
 session_start();
 require_once __DIR__ . '/../HealthSystem.php';
 
-
+// Only the administrator can open this page.
 if (!isset($_SESSION['ID']) || ($_SESSION['ROLE'] ?? '') != 'admin') {
     header('Location: ../login.php');
     exit();
@@ -74,7 +74,7 @@ $users = $pdo->query('SELECT user_id, username, role, status FROM users ORDER BY
             font-family: Arial, sans-serif;
         }
 
-        
+        /* NAVBAR */
         .navbar {
             background-color: #FFEB00;
             border-bottom: 3px solid #123B70;
@@ -105,6 +105,7 @@ $users = $pdo->query('SELECT user_id, username, role, status FROM users ORDER BY
             color: white;
         }
 
+        /* SIDEBAR */
         .sidebar {
             background-color: #123B70;
             min-height: calc(100vh - 73px);
@@ -138,6 +139,7 @@ $users = $pdo->query('SELECT user_id, username, role, status FROM users ORDER BY
             font-weight: bold;
         }
 
+        /* MAIN CONTENT */
         .main-content {
             padding: 25px;
         }
