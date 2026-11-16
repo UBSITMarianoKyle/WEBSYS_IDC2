@@ -1,5 +1,5 @@
 <?php
-    require_once "dbconn.php";
+    require_once __DIR__ . "/dbconn.php";
 
     class HealthSystem
     {
@@ -81,39 +81,67 @@
 
             return $prep->rowCount();
         }
-
-        public function update_resident($resident_id, $first_name, $last_name, $birth_date, $sex, $address, $contact)
+        
+        public function show_resident_profile($user_id)
         {
-            $update = "UPDATE residents
-                    SET first_name = :first_name,
-                        last_name = :last_name,
+            $sql = "SELECT * FROM residents WHERE user_id = :user_id";
+            $prep = $this->pdo->prepare($sql);
+            $prep->execute([":user_id" => $user_id]);
+
+            return $prep->fetch();
+        }
+        public function show_updated_resident($resident_id)
+        {
+            $sql = "SELECT * FROM residents WHERE resident_id = :resident_id";
+            $prep = $this->pdo->prepare($sql);
+            $prep->execute([":resident_id" => $resident_id]);
+
+            return $prep->fetch();
+        }
+
+        public function update_resident($resident_id, $fname, $lname, $birth_date, $sex, $address, $household_no, $contact, $health_condition, $allergies, $emergency_contact, $emergency_phone)
+        {
+            $sql = "UPDATE residents SET
+                        first_name = :fname,
+                        last_name = :lname,
                         birth_date = :birth_date,
                         sex = :sex,
                         address = :address,
-                        contact = :contact
+                        household_no = :household_no,
+                        contact = :contact,
+                        health_condition = :health_condition,
+                        allergies = :allergies,
+                        emergency_contact = :emergency_contact,
+                        emergency_phone = :emergency_phone
                     WHERE resident_id = :resident_id";
 
-            $prep = $this->pdo->prepare($update);
+            $prep = $this->pdo->prepare($sql);
 
             return $prep->execute([
                 ":resident_id" => $resident_id,
-                ":first_name" => $first_name,
-                ":last_name" => $last_name,
-                ":birth_date" => $birth_date,
+                ":fname" => $fname,
+                ":lname" => $lname,
+                ":birth_date" => $birth_date ?: null,
                 ":sex" => $sex,
                 ":address" => $address,
-                ":contact" => $contact
+                ":household_no" => $household_no,
+                ":contact" => $contact,
+                ":health_condition" => $health_condition,
+                ":allergies" => $allergies,
+                ":emergency_contact" => $emergency_contact,
+                ":emergency_phone" => $emergency_phone
             ]);
         }
 
-        public function show_updated_resident($resident_id)
+
+        /*public function show_updated_resident($resident_id)
         {
             $fetch = "SELECT * FROM residents WHERE resident_id = :resident_id";
             $prep = $this->pdo->prepare($fetch);
             $prep->execute([":resident_id" => $resident_id]);
 
             return $prep->fetchAll();
-        }
+        }*/
 
         public function add_consultation($resident_id, $staff_id, $consultation_date, $symptoms, $assessment, $treatment)
         {
@@ -146,6 +174,18 @@
             return $prep->fetchAll();
         }
 
+        public function show_resident_consultations($resident_id)
+        {
+            $fetch = "SELECT * FROM consultations
+                    WHERE resident_id = :resident_id
+                    ORDER BY consultation_date DESC";
+
+            $prep = $this->pdo->prepare($fetch);
+            $prep->execute([":resident_id" => $resident_id]);
+
+            return $prep->fetchAll();
+        }
+
         public function add_vaccination($resident_id, $vaccine_name, $dose_number, $vaccination_date, $next_schedule, $status, $recorded_by)
         {
             $insert = "INSERT INTO vaccinations
@@ -174,6 +214,18 @@
 
             $prep = $this->pdo->prepare($fetch);
             $prep->execute();
+
+            return $prep->fetchAll();
+        }
+
+        public function show_resident_vaccinations($resident_id)
+        {
+            $fetch = "SELECT * FROM vaccinations
+                    WHERE resident_id = :resident_id
+                    ORDER BY vaccination_date DESC";
+
+            $prep = $this->pdo->prepare($fetch);
+            $prep->execute([":resident_id" => $resident_id]);
 
             return $prep->fetchAll();
         }
@@ -411,34 +463,6 @@
             return $prep->fetchAll();
         }
 
-        public function add_appointment($resident_id, $service_type, $appointment_date, $notes)
-        {
-            $insert = "INSERT INTO appointments (resident_id, service_type, appointment_date, notes)
-                    VALUES (:resident_id, :service_type, :appointment_date, :notes)";
-
-            $prep = $this->pdo->prepare($insert);
-
-            return $prep->execute([
-                ":resident_id" => $resident_id,
-                ":service_type" => $service_type,
-                ":appointment_date" => $appointment_date,
-                ":notes" => $notes
-            ]);
-        }
-
-        public function show_appointments()
-        {
-            $fetch = "SELECT a.*, r.first_name, r.last_name
-                    FROM appointments a
-                    INNER JOIN residents r ON a.resident_id = r.resident_id
-                    ORDER BY a.appointment_date DESC";
-
-            $prep = $this->pdo->prepare($fetch);
-            $prep->execute();
-
-            return $prep->fetchAll();
-        }
-
         public function delete_appointment($appointment_id)
         {
             $delete = "DELETE FROM appointments WHERE appointment_id = :appointment_id";
@@ -488,5 +512,35 @@
 
             return $prep->fetch();
         }
+
+
+        public function add_appointment($resident_id, $service_type, $appointment_date, $notes)
+        {
+            $sql = "INSERT INTO appointments
+                    (resident_id, service_type, appointment_date, notes)
+                    VALUES (:resident_id, :service_type, :appointment_date, :notes)";
+
+            $prep = $this->pdo->prepare($sql);
+
+            return $prep->execute([
+                ":resident_id" => $resident_id,
+                ":service_type" => $service_type,
+                ":appointment_date" => $appointment_date,
+                ":notes" => $notes
+            ]);
+        }
+
+        public function show_resident_appointments($resident_id)
+        {
+            $sql = "SELECT * FROM appointments
+                    WHERE resident_id = :resident_id
+                    ORDER BY appointment_date DESC";
+
+            $prep = $this->pdo->prepare($sql);
+            $prep->execute([":resident_id" => $resident_id]);
+
+            return $prep->fetchAll();
+        }
+
     }
 ?>
