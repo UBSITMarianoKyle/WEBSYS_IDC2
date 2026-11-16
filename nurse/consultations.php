@@ -10,6 +10,8 @@
 
     $obj = new HealthSystem($pdo);
 
+    date_default_timezone_set('Asia/Manila');
+
     $fullname = $_SESSION['USERNAME'] ?? 'Nurse';
     $error = "";
 
@@ -17,45 +19,57 @@
         $_SESSION['nurse_token'] = bin2hex(random_bytes(32));
     }
 
-    if(isset($_POST['update_status'])){
+    $residents = $obj->show_residents();
+    $resident_ids = array_column($residents, 'resident_id');
 
-        $appointment_id = (int)($_POST['appointment_id'] ?? 0);
-        $new_status = $_POST['new_status'] ?? '';
+    if(isset($_POST['submit'])){
 
-        $found = $obj->show_updated_appointment($appointment_id);
-        $current = $found[0]['status'] ?? '';
-
-        // pending -> approved / rejected, approved -> completed
-        $allowed = [
-            'pending'  => ['approved', 'rejected'],
-            'approved' => ['completed']
-        ];
+        $resident_id = (int)($_POST['resident_id'] ?? 0);
+        $consultation_date = $_POST['consultation_date'] ?? '';
+        $symptoms = trim($_POST['symptoms'] ?? '');
+        $assessment = trim($_POST['assessment'] ?? '');
+        $treatment = trim($_POST['treatment'] ?? '');
 
         if(!hash_equals($_SESSION['nurse_token'], $_POST['nurse_token'] ?? '')){
             $error = "Invalid request.";
         }
-        else if(!$found){
-            $error = "Appointment not found.";
+        else if(!in_array($resident_id, $resident_ids)){
+            $error = "Please select a valid resident.";
         }
-        else if(!in_array($new_status, $allowed[$current] ?? [], true)){
-            $error = "That status change is not allowed.";
+        else if(!DateTime::createFromFormat('!Y-m-d\TH:i', $consultation_date)){
+            $error = "Invalid consultation date.";
+        }
+        else if(strtotime($consultation_date) > time()){
+            $error = "Consultation date cannot be in the future.";
+        }
+        else if($symptoms == "" || $assessment == ""){
+            $error = "Symptoms and assessment are required.";
         }
         else{
-            $obj->update_appointment($appointment_id, $new_status, $_SESSION['ID']);
 
-            header("location: appointments.php?updated=1");
-            exit();
+            $consultation_date = str_replace("T", " ", $consultation_date) . ":00";
+
+            $result = $obj->add_consultation(
+                $resident_id,
+                $_SESSION['ID'],
+                $consultation_date,
+                $symptoms,
+                $assessment,
+                $treatment
+            );
+
+            if($result){
+                header("location: consultations.php?success=1");
+                exit();
+            }
+            else{
+                $error = "Failed to save consultation.";
+            }
         }
     }
 
-    $appointments = $obj->show_appointments();
+    $consultations = $obj->show_consultations();
 
-
-    $filter = isset($_POST['filter']) ? ($_POST['status'] ?? 'all') : 'all';
-
-    if(!in_array($filter, ['all', 'pending', 'approved', 'rejected', 'completed'], true)){
-        $filter = 'all';
-    }
 ?>
 
 <!DOCTYPE html>
@@ -64,7 +78,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Appointments | Barangay Tawang Health System</title>
+    <title>Consultations | Barangay Tawang Health System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
@@ -402,11 +416,11 @@
                 Dashboard
             </a>
 
-            <a href="appointments.php" class="active">
+            <a href="appointments.php">
                 Appointments
             </a>
 
-            <a href="consultations.php">
+            <a href="consultations.php" class="active">
                 Consultations
             </a>
 
@@ -424,11 +438,11 @@
         <main class="col-md-9 col-lg-10 main-content">
 
 
-            <h2>Appointment Management</h2>
-            <p>Approve or reject appointment requests and view appointment schedules.</p>
+            <h2>Consultation Management</h2>
+            <p>Record resident consultations and view consultation history.</p>
 
-            <?php if(isset($_GET['updated'])): ?>
-                <p class="alert alert-success">Appointment updated successfully.</p>
+            <?php if(isset($_GET['success'])): ?>
+                <p class="alert alert-success">Consultation saved successfully.</p>
             <?php endif; ?>
             <?php if($error != ""): ?>
                 <p class="alert alert-danger">
@@ -436,106 +450,110 @@
                 </p>
             <?php endif; ?>
 
+            <!-- ADD CONSULTATION -->
             <div class="box">
 
-                <h3>Appointment Requests</h3>
+                <h3>New Consultation</h3>
 
-                <!-- FILTER -->
                 <form method="post">
 
+                    <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
+
                     <table class="form-table">
+
                         <tr>
-                            <th>Show Status</th>
+                            <th>Resident</th>
                             <td>
-                                <select name="status" class="form-select">
-                                    <?php foreach(['all', 'pending', 'approved', 'rejected', 'completed'] as $s): ?>
-                                        <option value="<?php echo $s; ?>"
-                                            <?php if($filter == $s) echo 'selected'; ?>>
-                                            <?php echo ucfirst($s); ?>
-                                        </option>
-                                    <?php endforeach; ?>
+                                <select name="resident_id" class="form-select" required>
+                                    <option value="" disabled <?php if(empty($_POST['resident_id'])) echo 'selected'; ?>>Select Resident</option>
+                                    <?php foreach($residents as $r): ?>
+                            <option value="<?php echo (int)$r['resident_id']; ?>"
+                                <?php if(($_POST['resident_id'] ?? '') == $r['resident_id']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($r['first_name'] . " " . $r['last_name'], ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
                                 </select>
                             </td>
+                        </tr>
+
+                        <tr>
+                            <th>Consultation Date and Time</th>
                             <td>
-                                <button type="submit" name="filter" class="btn submit-btn">Filter</button>
+                                <input type="datetime-local" name="consultation_date" class="form-control"
+                                       max="<?php echo date('Y-m-d\TH:i'); ?>"
+                                       value="<?php echo htmlspecialchars($_POST['consultation_date'] ?? date('Y-m-d\TH:i'), ENT_QUOTES, 'UTF-8'); ?>"
+                                       required>
                             </td>
                         </tr>
+
+                        <tr>
+                            <th>Symptoms and Complaints</th>
+                            <td>
+                                <textarea name="symptoms" class="form-control" rows="2" required><?php echo htmlspecialchars($_POST['symptoms'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Assessment</th>
+                            <td>
+                                <textarea name="assessment" class="form-control" rows="2" required><?php echo htmlspecialchars($_POST['assessment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Treatment</th>
+                            <td>
+                                <textarea name="treatment" class="form-control" rows="2"><?php echo htmlspecialchars($_POST['treatment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2">
+                                <button type="submit" name="submit" class="btn submit-btn">Save Consultation</button>
+                            </td>
+                        </tr>
+
                     </table>
 
                 </form>
 
-                <!-- APPOINTMENT TABLE -->
+            </div>
+
+            <!-- CONSULTATION HISTORY -->
+            <div class="box">
+
+                <h3>Consultation History</h3>
+
                 <table class="data-table">
 
                     <tr>
                         <th>ID</th>
                         <th>Resident</th>
-                        <th>Service Type</th>
                         <th>Date and Time</th>
-                        <th>Notes</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>Symptoms</th>
+                        <th>Assessment</th>
+                        <th>Treatment</th>
                     </tr>
 
-                    <?php $shown = 0; ?>
+                    <?php if(count($consultations) > 0): ?>
 
-                    <?php foreach($appointments as $row): ?>
+                        <?php foreach($consultations as $row): ?>
+                            <tr>
+                                <td><?php echo (int)$row['consultation_id']; ?></td>
+                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo date("M d, Y - h:i A", strtotime($row['consultation_date'])); ?></td>
+                                <td><?php echo htmlspecialchars($row['symptoms'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($row['assessment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($row['treatment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
 
-                        <?php
-                            if($filter != 'all' && $row['status'] != $filter){
-                                continue;
-                            }
-                            $shown++;
-                        ?>
+                    <?php else: ?>
 
                         <tr>
-                            <td><?php echo (int)$row['appointment_id']; ?></td>
-                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($row['service_type'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo date("M d, Y - h:i A", strtotime($row['appointment_date'])); ?></td>
-                            <td><?php echo htmlspecialchars($row['notes'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars(ucfirst($row['status']), ENT_QUOTES, 'UTF-8'); ?></td>
-
-                            <td>
-                                <?php if($row['status'] == 'pending'): ?>
-
-                                    <form method="post">
-                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
-                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
-                                        <input type="hidden" name="new_status" value="approved">
-                                        <button type="submit" name="update_status" class="btn btn-success btn-sm">Approve</button>
-                                    </form>
-
-                                    <form method="post">
-                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
-                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
-                                        <input type="hidden" name="new_status" value="rejected">
-                                        <button type="submit" name="update_status" class="btn btn-danger btn-sm">Reject</button>
-                                    </form>
-
-                                <?php elseif($row['status'] == 'approved'): ?>
-
-                                    <form method="post">
-                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
-                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
-                                        <input type="hidden" name="new_status" value="completed">
-                                        <button type="submit" name="update_status" class="btn btn-primary btn-sm">Mark Completed</button>
-                                    </form>
-
-                                <?php else: ?>
-
-                                    -
-
-                                <?php endif; ?>
-                            </td>
+                            <td colspan="6" class="empty">No consultations found.</td>
                         </tr>
 
-                    <?php endforeach; ?>
-
-                    <?php if($shown == 0): ?>
-                        <tr>
-                            <td colspan="7" class="empty">No appointments found.</td>
-                        </tr>
                     <?php endif; ?>
 
                 </table>

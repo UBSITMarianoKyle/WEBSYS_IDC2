@@ -22,98 +22,64 @@
     $residents = $obj->show_residents();
     $resident_ids = array_column($residents, 'resident_id');
 
-    $medicines = $obj->show_medicines();
-    $medicine_ids = array_column($medicines, 'medicine_id');
+    $vaccines = ['BCG', 'Hepatitis B', 'Pentavalent', 'Oral Polio (OPV)', 'Inactivated Polio (IPV)',
+                 'Pneumococcal (PCV)', 'MMR', 'COVID-19', 'Influenza', 'Tetanus Toxoid', 'Other'];
 
-    // ADD NEW MEDICINE
-    if(isset($_POST['add_medicine'])){
+    if(isset($_POST['submit'])){
 
-        $medicine_name = trim($_POST['medicine_name'] ?? '');
-        $unit = trim($_POST['unit'] ?? '');
-        $quantity = $_POST['quantity'] ?? '';
-        $minimum_stock = $_POST['minimum_stock'] ?? '';
-        $expiration_date = $_POST['expiration_date'] ?? '';
-
-        if(!hash_equals($_SESSION['nurse_token'], $_POST['nurse_token'] ?? '')){
-            $error = "Invalid request.";
-        }
-        else if($medicine_name == "" || $unit == ""){
-            $error = "Medicine name and unit are required.";
-        }
-        else if(strlen($medicine_name) > 100 || strlen($unit) > 30){
-            $error = "Medicine name or unit is too long.";
-        }
-        else if(!ctype_digit($quantity) || !ctype_digit($minimum_stock)){
-            $error = "Quantity and minimum stock must be whole numbers.";
-        }
-        else if(!DateTime::createFromFormat('!Y-m-d', $expiration_date) || $expiration_date <= date('Y-m-d')){
-            $error = "Expiration date must be a future date.";
-        }
-        else{
-            $result = $obj->add_medicine($medicine_name, $unit, (int)$quantity, (int)$minimum_stock, $expiration_date);
-
-            if($result){
-                header("location: medicines.php?added=1");
-                exit();
-            }
-            else{
-                $error = "Failed to add medicine.";
-            }
-        }
-    }
-
-    // STOCK IN / STOCK OUT
-    if(isset($_POST['stock'])){
-
-        $medicine_id = (int)($_POST['medicine_id'] ?? 0);
-        $transaction_type = $_POST['transaction_type'] ?? '';
-        $quantity = $_POST['stock_quantity'] ?? '';
         $resident_id = (int)($_POST['resident_id'] ?? 0);
-        $remarks = trim($_POST['remarks'] ?? '');
+        $vaccine_name = $_POST['vaccine_name'] ?? '';
+        $dose_number = (int)($_POST['dose_number'] ?? 0);
+        $vaccination_date = $_POST['vaccination_date'] ?? '';
+        $next_schedule = $_POST['next_schedule'] ?? '';
+        $status = $_POST['status'] ?? '';
 
         if(!hash_equals($_SESSION['nurse_token'], $_POST['nurse_token'] ?? '')){
             $error = "Invalid request.";
         }
-        else if(!in_array($medicine_id, $medicine_ids)){
-            $error = "Please select a valid medicine.";
+        else if(!in_array($resident_id, $resident_ids)){
+            $error = "Please select a valid resident.";
         }
-        else if(!in_array($transaction_type, ['stock_in', 'stock_out'], true)){
-            $error = "Invalid transaction type.";
+        else if(!in_array($vaccine_name, $vaccines, true)){
+            $error = "Please select a vaccine.";
         }
-        else if(!ctype_digit($quantity) || (int)$quantity < 1){
-            $error = "Quantity must be at least 1.";
+        else if($dose_number < 1 || $dose_number > 10){
+            $error = "Dose number must be from 1 to 10.";
         }
-        else if($resident_id != 0 && !in_array($resident_id, $resident_ids)){
-            $error = "Invalid resident.";
+        else if(!DateTime::createFromFormat('!Y-m-d', $vaccination_date) || $vaccination_date > date('Y-m-d')){
+            $error = "Invalid vaccination date.";
+        }
+        else if($next_schedule != "" &&
+                (!DateTime::createFromFormat('!Y-m-d', $next_schedule) || $next_schedule <= $vaccination_date)){
+            $error = "Next schedule must be after the vaccination date.";
+        }
+        else if(!in_array($status, ['pending', 'completed'], true)){
+            $error = "Invalid status.";
         }
         else{
-            // Only stock-out can be given to a resident
-            if($transaction_type == 'stock_in'){
-                $resident_id = 0;
-            }
 
-            $result = $obj->change_medicine_stock(
-                $medicine_id,
-                $resident_id ?: null,
-                $_SESSION['ID'],
-                $transaction_type,
-                (int)$quantity,
-                $remarks
+            $result = $obj->add_vaccination(
+                $resident_id,
+                $vaccine_name,
+                $dose_number,
+                $vaccination_date,
+                $next_schedule ?: null,
+                $status,
+                $_SESSION['ID']
             );
 
             if($result){
-                header("location: medicines.php?stocked=1");
+                header("location: vaccinations.php?success=1");
                 exit();
             }
             else{
-                $error = "Failed to update stock. Check that there is enough stock.";
+                $error = "Failed to save vaccination record.";
             }
         }
     }
 
-    // Reload after changes
-    $medicines = $obj->show_medicines();
-    $transactions = array_slice($obj->show_medicine_transactions(), 0, 20);
+    $vaccinations = $obj->show_vaccinations();
+
 ?>
 
 <!DOCTYPE html>
@@ -122,7 +88,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Medicine Inventory | Barangay Tawang Health System</title>
+    <title>Vaccinations | Barangay Tawang Health System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
@@ -468,11 +434,11 @@
                 Consultations
             </a>
 
-            <a href="vaccinations.php">
+            <a href="vaccinations.php" class="active">
                 Vaccinations
             </a>
 
-            <a href="medicines.php" class="active">
+            <a href="medicines.php">
                 Medicine Inventory
             </a>
 
@@ -482,14 +448,11 @@
         <main class="col-md-9 col-lg-10 main-content">
 
 
-            <h2>Medicine Inventory</h2>
-            <p>Monitor stock, record stock-in and stock-out, and track medicine distribution.</p>
+            <h2>Vaccination Monitoring</h2>
+            <p>Record vaccinations, next schedules, and completion status.</p>
 
-            <?php if(isset($_GET['added'])): ?>
-                <p class="alert alert-success">Medicine added successfully.</p>
-            <?php endif; ?>
-            <?php if(isset($_GET['stocked'])): ?>
-                <p class="alert alert-success">Stock updated successfully.</p>
+            <?php if(isset($_GET['success'])): ?>
+                <p class="alert alert-success">Vaccination record saved successfully.</p>
             <?php endif; ?>
             <?php if($error != ""): ?>
                 <p class="alert alert-danger">
@@ -497,10 +460,10 @@
                 </p>
             <?php endif; ?>
 
-            <!-- STOCK IN / OUT -->
+            <!-- ADD VACCINATION -->
             <div class="box">
 
-                <h3>Stock-In / Stock-Out</h3>
+                <h3>New Vaccination Record</h3>
 
                 <form method="post">
 
@@ -509,45 +472,10 @@
                     <table class="form-table">
 
                         <tr>
-                            <th>Medicine</th>
+                            <th>Resident</th>
                             <td>
-                                <select name="medicine_id" class="form-select" required>
-                                    <option value="" disabled <?php if(empty($_POST['medicine_id'])) echo 'selected'; ?>>Select Medicine</option>
-                                    <?php foreach($medicines as $m): ?>
-                                        <option value="<?php echo (int)$m['medicine_id']; ?>"
-                                            <?php if(($_POST['medicine_id'] ?? '') == $m['medicine_id']) echo 'selected'; ?>>
-                                            <?php echo htmlspecialchars($m['medicine_name'], ENT_QUOTES, 'UTF-8'); ?>
-                                            (<?php echo (int)$m['quantity']; ?> <?php echo htmlspecialchars($m['unit'] ?? '', ENT_QUOTES, 'UTF-8'); ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Transaction</th>
-                            <td>
-                                <select name="transaction_type" class="form-select" required>
-                                    <option value="stock_in" <?php if(($_POST['transaction_type'] ?? '') == 'stock_in') echo 'selected'; ?>>Stock-In (add stock)</option>
-                                    <option value="stock_out" <?php if(($_POST['transaction_type'] ?? 'stock_out') == 'stock_out') echo 'selected'; ?>>Stock-Out (distribute)</option>
-                                </select>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Quantity</th>
-                            <td>
-                                <input type="number" name="stock_quantity" class="form-control" min="1"
-                                       value="<?php echo htmlspecialchars($_POST['stock_quantity'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Given to Resident (stock-out only)</th>
-                            <td>
-                                <select name="resident_id" class="form-select">
-                                    <option value="">None</option>
+                                <select name="resident_id" class="form-select" required>
+                                    <option value="" disabled <?php if(empty($_POST['resident_id'])) echo 'selected'; ?>>Select Resident</option>
                                     <?php foreach($residents as $r): ?>
                             <option value="<?php echo (int)$r['resident_id']; ?>"
                                 <?php if(($_POST['resident_id'] ?? '') == $r['resident_id']) echo 'selected'; ?>>
@@ -559,16 +487,61 @@
                         </tr>
 
                         <tr>
-                            <th>Remarks</th>
+                            <th>Vaccine Type</th>
                             <td>
-                                <input type="text" name="remarks" class="form-control" maxlength="255"
-                                       value="<?php echo htmlspecialchars($_POST['remarks'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                <select name="vaccine_name" class="form-select" required>
+                                    <option value="" disabled <?php if(empty($_POST['vaccine_name'])) echo 'selected'; ?>>Select Vaccine</option>
+                                    <?php foreach($vaccines as $v): ?>
+                                        <option value="<?php echo htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); ?>"
+                                            <?php if(($_POST['vaccine_name'] ?? '') == $v) echo 'selected'; ?>>
+                                            <?php echo htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Dose Number</th>
+                            <td>
+                                <input type="number" name="dose_number" class="form-control" min="1" max="10"
+                                       value="<?php echo htmlspecialchars($_POST['dose_number'] ?? '1', ENT_QUOTES, 'UTF-8'); ?>"
+                                       required>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Vaccination Date</th>
+                            <td>
+                                <input type="date" name="vaccination_date" class="form-control"
+                                       max="<?php echo date('Y-m-d'); ?>"
+                                       value="<?php echo htmlspecialchars($_POST['vaccination_date'] ?? date('Y-m-d'), ENT_QUOTES, 'UTF-8'); ?>"
+                                       required>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Next Schedule</th>
+                            <td>
+                                <input type="date" name="next_schedule" class="form-control"
+                                       min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>"
+                                       value="<?php echo htmlspecialchars($_POST['next_schedule'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Completion Status</th>
+                            <td>
+                                <select name="status" class="form-select" required>
+                                    <option value="pending" <?php if(($_POST['status'] ?? 'pending') == 'pending') echo 'selected'; ?>>Pending</option>
+                                    <option value="completed" <?php if(($_POST['status'] ?? '') == 'completed') echo 'selected'; ?>>Completed</option>
+                                </select>
                             </td>
                         </tr>
 
                         <tr>
                             <td colspan="2">
-                                <button type="submit" name="stock" class="btn submit-btn">Save Transaction</button>
+                                <button type="submit" name="submit" class="btn submit-btn">Save Vaccination</button>
                             </td>
                         </tr>
 
@@ -578,181 +551,50 @@
 
             </div>
 
-            <!-- AVAILABLE MEDICINES -->
+            <!-- VACCINATION RECORDS -->
             <div class="box">
 
-                <h3>Available Medicines</h3>
+                <h3>Vaccination Records</h3>
 
                 <table class="data-table">
 
                     <tr>
-                        <th>Medicine</th>
-                        <th>Unit</th>
-                        <th>Quantity</th>
-                        <th>Minimum Stock</th>
-                        <th>Expiration</th>
+                        <th>ID</th>
+                        <th>Resident</th>
+                        <th>Vaccine</th>
+                        <th>Dose</th>
+                        <th>Date</th>
+                        <th>Next Schedule</th>
                         <th>Status</th>
                     </tr>
 
-                    <?php if(count($medicines) > 0): ?>
+                    <?php if(count($vaccinations) > 0): ?>
 
-                        <?php foreach($medicines as $row): ?>
+                        <?php foreach($vaccinations as $row): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($row['medicine_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($row['unit'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo (int)$row['quantity']; ?></td>
-                                <td><?php echo (int)$row['minimum_stock']; ?></td>
+                                <td><?php echo (int)$row['vaccination_id']; ?></td>
+                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($row['vaccine_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo (int)$row['dose_number']; ?></td>
+                                <td><?php echo date("M d, Y", strtotime($row['vaccination_date'])); ?></td>
                                 <td>
                                     <?php
-                                        if(!empty($row['expiration_date'])){
-                                            echo date("M d, Y", strtotime($row['expiration_date']));
+                                        if(!empty($row['next_schedule'])){
+                                            echo date("M d, Y", strtotime($row['next_schedule']));
                                         }
                                         else{
                                             echo "-";
                                         }
                                     ?>
                                 </td>
-                                <td>
-                                    <?php
-                                        if(!empty($row['expiration_date']) && $row['expiration_date'] < date('Y-m-d')){
-                                            echo 'Expired. ';
-                                        }
-
-                                        if($row['quantity'] <= $row['minimum_stock']){
-                                            echo 'Low Stock';
-                                        }
-                                        else{
-                                            echo 'In Stock';
-                                        }
-                                    ?>
-                                </td>
+                                <td><?php echo htmlspecialchars(ucfirst($row['status']), ENT_QUOTES, 'UTF-8'); ?></td>
                             </tr>
                         <?php endforeach; ?>
 
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="6" class="empty">No medicines found.</td>
-                        </tr>
-
-                    <?php endif; ?>
-
-                </table>
-
-            </div>
-
-            <!-- ADD NEW MEDICINE -->
-            <div class="box">
-
-                <h3>Add New Medicine</h3>
-
-                <form method="post">
-
-                    <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
-
-                    <table class="form-table">
-
-                        <tr>
-                            <th>Medicine Name</th>
-                            <td>
-                                <input type="text" name="medicine_name" class="form-control" maxlength="100"
-                                       value="<?php echo htmlspecialchars($_POST['medicine_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Unit</th>
-                            <td>
-                                <input type="text" name="unit" class="form-control" maxlength="30"
-                                       placeholder="tablet, bottle"
-                                       value="<?php echo htmlspecialchars($_POST['unit'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Quantity</th>
-                            <td>
-                                <input type="number" name="quantity" class="form-control" min="0"
-                                       value="<?php echo htmlspecialchars($_POST['quantity'] ?? '0', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Minimum Stock</th>
-                            <td>
-                                <input type="number" name="minimum_stock" class="form-control" min="0"
-                                       value="<?php echo htmlspecialchars($_POST['minimum_stock'] ?? '10', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Expiration Date</th>
-                            <td>
-                                <input type="date" name="expiration_date" class="form-control"
-                                       min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>"
-                                       value="<?php echo htmlspecialchars($_POST['expiration_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td colspan="2">
-                                <button type="submit" name="add_medicine" class="btn submit-btn">Add Medicine</button>
-                            </td>
-                        </tr>
-
-                    </table>
-
-                </form>
-
-            </div>
-
-            <!-- DISTRIBUTION RECORDS -->
-            <div class="box">
-
-                <h3>Recent Stock Transactions and Distribution Records</h3>
-
-                <table class="data-table">
-
-                    <tr>
-                        <th>Date</th>
-                        <th>Medicine</th>
-                        <th>Type</th>
-                        <th>Quantity</th>
-                        <th>Resident</th>
-                        <th>Remarks</th>
-                    </tr>
-
-                    <?php if(count($transactions) > 0): ?>
-
-                        <?php foreach($transactions as $row): ?>
-                            <tr>
-                                <td><?php echo date("M d, Y - h:i A", strtotime($row['transaction_date'])); ?></td>
-                                <td><?php echo htmlspecialchars($row['medicine_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo $row['transaction_type'] == 'stock_in' ? 'Stock-In' : 'Stock-Out'; ?></td>
-                                <td><?php echo (int)$row['quantity']; ?></td>
-                                <td>
-                                    <?php
-                                        if(!empty($row['first_name'])){
-                                            echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8');
-                                        }
-                                        else{
-                                            echo "-";
-                                        }
-                                    ?>
-                                </td>
-                                <td><?php echo htmlspecialchars($row['remarks'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-
-                    <?php else: ?>
-
-                        <tr>
-                            <td colspan="6" class="empty">No transactions yet.</td>
+                            <td colspan="7" class="empty">No vaccination records found.</td>
                         </tr>
 
                     <?php endif; ?>
