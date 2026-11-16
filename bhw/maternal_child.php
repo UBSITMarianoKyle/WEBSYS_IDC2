@@ -82,8 +82,6 @@ function h($value) {
 <a class="active" href="maternal_child.php">Maternal & Child</a></aside><main class="col-md-9 col-lg-10 main-content"><h2 class="section-title mb-4">Maternal and Child Health</h2>
 
 
-    <h2 class="section-title">Maternal and Child Health</h2>
-
     <p class="text-muted">
         Manage pregnancy, prenatal, and child health records.
     </p>

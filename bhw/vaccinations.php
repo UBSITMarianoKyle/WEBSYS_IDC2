@@ -56,7 +56,7 @@ function h($value) {
 <a class="" href="residents.php">Residents</a>
 <a class="" href="consultations.php">Consultations</a>
 <a class="active" href="vaccinations.php">Vaccinations</a>
-<a class="" href="maternal_child.php">Maternal & Child</a></aside><main class="col-md-9 col-lg-10 main-content"><h2 class="section-title mb-4">Vaccinations</h2>
+<a class="" href="maternal_child.php">Maternal & Child</a></aside><main class="col-md-9 col-lg-10 main-content">
 
 
     <h2 class="section-title">Vaccination Records</h2>
