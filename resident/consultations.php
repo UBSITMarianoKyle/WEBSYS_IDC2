@@ -190,7 +190,7 @@
                 <?php echo htmlspecialchars($_SESSION['USERNAME'] ?? 'Resident', ENT_QUOTES, 'UTF-8'); ?>
             </span>
 
-            <a href="logout.php" class="btn btn-outline-dark btn-sm">
+            <a href="../logout.php" class="btn btn-outline-dark btn-sm">
                 Logout
             </a>
 
