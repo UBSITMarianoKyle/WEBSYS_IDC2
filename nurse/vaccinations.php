@@ -252,6 +252,9 @@
             padding: 22px;
             margin-bottom: 22px;
             box-shadow: 0 2px 8px #00000012;
+        }
+
+        .box:has(.data-table) {
             overflow-x: auto;
         }
 

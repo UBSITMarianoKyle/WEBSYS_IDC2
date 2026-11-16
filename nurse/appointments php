@@ -53,7 +53,7 @@
                 (!DateTime::createFromFormat('!Y-m-d', $next_schedule) || $next_schedule <= $vaccination_date)){
             $error = "Next schedule must be after the vaccination date.";
         }
-        else if(!in_array($status, ['ongoing', 'completed'], true)){
+        else if(!in_array($status, ['pending', 'completed'], true)){
             $error = "Invalid status.";
         }
         else{
@@ -218,6 +218,9 @@
             padding: 22px;
             margin-bottom: 22px;
             box-shadow: 0 2px 8px #00000012;
+        }
+
+        .box:has(.data-table) {
             overflow-x: auto;
         }
 
@@ -530,7 +533,7 @@
                             <th>Completion Status</th>
                             <td>
                                 <select name="status" class="form-select" required>
-                                    <option value="ongoing" <?php if(($_POST['status'] ?? 'ongoing') == 'ongoing') echo 'selected'; ?>>Ongoing</option>
+                                    <option value="pending" <?php if(($_POST['status'] ?? 'pending') == 'pending') echo 'selected'; ?>>Pending</option>
                                     <option value="completed" <?php if(($_POST['status'] ?? '') == 'completed') echo 'selected'; ?>>Completed</option>
                                 </select>
                             </td>

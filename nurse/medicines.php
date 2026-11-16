@@ -152,6 +152,9 @@
             padding: 22px;
             margin-bottom: 22px;
             box-shadow: 0 2px 8px #00000012;
+        }
+
+        .box:has(.data-table) {
             overflow-x: auto;
         }
 
@@ -391,39 +394,6 @@
 
             </div>
 
-            <!-- SUMMARY -->
-            <div class="row g-3 mb-4">
-
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Pending Appointments</h3>
-                        <div class="stat-number"><?php echo (int)$stats['pending_appointments']; ?></div>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Total Consultations</h3>
-                        <div class="stat-number"><?php echo (int)$stats['total_consultations']; ?></div>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Vaccination Records</h3>
-                        <div class="stat-number"><?php echo (int)$stats['total_vaccinations']; ?></div>
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Low-Stock Medicines</h3>
-                        <div class="stat-number"><?php echo (int)$stats['low_stock']; ?></div>
-                    </div>
-                </div>
-
-            </div>
-
             <!-- NURSE SERVICES -->
             <div class="mb-4">
 
@@ -506,6 +476,39 @@
                     </div>
 
                 </div>
+            </div>
+
+            <!-- SUMMARY -->
+            <div class="row g-3 mb-4">
+
+                <div class="col-md-6 col-xl-3">
+                    <div class="box mb-0">
+                        <h3>Pending Appointments</h3>
+                        <div class="stat-number"><?php echo (int)$stats['pending_appointments']; ?></div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-xl-3">
+                    <div class="box mb-0">
+                        <h3>Total Consultations</h3>
+                        <div class="stat-number"><?php echo (int)$stats['total_consultations']; ?></div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-xl-3">
+                    <div class="box mb-0">
+                        <h3>Vaccination Records</h3>
+                        <div class="stat-number"><?php echo (int)$stats['total_vaccinations']; ?></div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-xl-3">
+                    <div class="box mb-0">
+                        <h3>Low-Stock Medicines</h3>
+                        <div class="stat-number"><?php echo (int)$stats['low_stock']; ?></div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- LOW STOCK -->
