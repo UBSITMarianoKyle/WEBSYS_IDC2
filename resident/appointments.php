@@ -285,7 +285,7 @@
         <a href="index.php"
            class="navbar-brand d-flex align-items-center gap-2">
 
-            <img src="../brgylogo.jpg"
+            <img src="../brgylogo.png"
                  class="barangay-logo"
                  alt="Barangay Logo">
 
