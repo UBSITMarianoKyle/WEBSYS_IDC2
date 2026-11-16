@@ -242,7 +242,7 @@
                 <?php echo htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8'); ?>
             </span>
 
-            <a href="logout.php" class="btn logout-btn btn-sm">
+            <a href="../logout.php" class="btn logout-btn btn-sm">
                 Logout
             </a>
 

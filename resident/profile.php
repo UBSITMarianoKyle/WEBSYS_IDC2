@@ -201,7 +201,7 @@
                 <?php echo displayInfo($_SESSION['USERNAME'] ?? 'Resident'); ?>
             </span>
 
-            <a href="logout.php" class="btn logout-btn btn-sm">
+            <a href="../logout.php" class="btn logout-btn btn-sm">
                 Logout
             </a>
 
