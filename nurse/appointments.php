@@ -10,8 +10,6 @@
 
     $obj = new HealthSystem($pdo);
 
-    date_default_timezone_set('Asia/Manila');
-
     $fullname = $_SESSION['USERNAME'] ?? 'Nurse';
     $error = "";
 
@@ -19,67 +17,45 @@
         $_SESSION['nurse_token'] = bin2hex(random_bytes(32));
     }
 
-    $residents = $obj->show_residents();
-    $resident_ids = array_column($residents, 'resident_id');
+    if(isset($_POST['update_status'])){
 
-    $vaccines = ['BCG', 'Hepatitis B', 'Pentavalent', 'Oral Polio (OPV)', 'Inactivated Polio (IPV)',
-                 'Pneumococcal (PCV)', 'MMR', 'COVID-19', 'Influenza', 'Tetanus Toxoid', 'Other'];
+        $appointment_id = (int)($_POST['appointment_id'] ?? 0);
+        $new_status = $_POST['new_status'] ?? '';
 
-    if(isset($_POST['submit'])){
+        $found = $obj->show_updated_appointment($appointment_id);
+        $current = $found[0]['status'] ?? '';
 
-        $resident_id = (int)($_POST['resident_id'] ?? 0);
-        $vaccine_name = $_POST['vaccine_name'] ?? '';
-        $dose_number = (int)($_POST['dose_number'] ?? 0);
-        $vaccination_date = $_POST['vaccination_date'] ?? '';
-        $next_schedule = $_POST['next_schedule'] ?? '';
-        $status = $_POST['status'] ?? '';
+        // pending -> approved / rejected, approved -> completed
+        $allowed = [
+            'pending'  => ['approved', 'rejected'],
+            'approved' => ['completed']
+        ];
 
         if(!hash_equals($_SESSION['nurse_token'], $_POST['nurse_token'] ?? '')){
             $error = "Invalid request.";
         }
-        else if(!in_array($resident_id, $resident_ids)){
-            $error = "Please select a valid resident.";
+        else if(!$found){
+            $error = "Appointment not found.";
         }
-        else if(!in_array($vaccine_name, $vaccines, true)){
-            $error = "Please select a vaccine.";
-        }
-        else if($dose_number < 1 || $dose_number > 10){
-            $error = "Dose number must be from 1 to 10.";
-        }
-        else if(!DateTime::createFromFormat('!Y-m-d', $vaccination_date) || $vaccination_date > date('Y-m-d')){
-            $error = "Invalid vaccination date.";
-        }
-        else if($next_schedule != "" &&
-                (!DateTime::createFromFormat('!Y-m-d', $next_schedule) || $next_schedule <= $vaccination_date)){
-            $error = "Next schedule must be after the vaccination date.";
-        }
-        else if(!in_array($status, ['pending', 'completed'], true)){
-            $error = "Invalid status.";
+        else if(!in_array($new_status, $allowed[$current] ?? [], true)){
+            $error = "That status change is not allowed.";
         }
         else{
+            $obj->update_appointment($appointment_id, $new_status, $_SESSION['ID']);
 
-            $result = $obj->add_vaccination(
-                $resident_id,
-                $vaccine_name,
-                $dose_number,
-                $vaccination_date,
-                $next_schedule ?: null,
-                $status,
-                $_SESSION['ID']
-            );
-
-            if($result){
-                header("location: vaccinations.php?success=1");
-                exit();
-            }
-            else{
-                $error = "Failed to save vaccination record.";
-            }
+            header("location: appointments.php?updated=1");
+            exit();
         }
     }
 
-    $vaccinations = $obj->show_vaccinations();
+    $appointments = $obj->show_appointments();
 
+
+    $filter = isset($_POST['filter']) ? ($_POST['status'] ?? 'all') : 'all';
+
+    if(!in_array($filter, ['all', 'pending', 'approved', 'rejected', 'completed'], true)){
+        $filter = 'all';
+    }
 ?>
 
 <!DOCTYPE html>
@@ -88,7 +64,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Vaccinations | Barangay Tawang Health System</title>
+    <title>Appointments | Barangay Tawang Health System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
@@ -426,7 +402,7 @@
                 Dashboard
             </a>
 
-            <a href="appointments.php">
+            <a href="appointments.php" class="active">
                 Appointments
             </a>
 
@@ -434,7 +410,7 @@
                 Consultations
             </a>
 
-            <a href="vaccinations.php" class="active">
+            <a href="vaccinations.php">
                 Vaccinations
             </a>
 
@@ -448,11 +424,11 @@
         <main class="col-md-9 col-lg-10 main-content">
 
 
-            <h2>Vaccination Monitoring</h2>
-            <p>Record vaccinations, next schedules, and completion status.</p>
+            <h2>Appointment Management</h2>
+            <p>Approve or reject appointment requests and view appointment schedules.</p>
 
-            <?php if(isset($_GET['success'])): ?>
-                <p class="alert alert-success">Vaccination record saved successfully.</p>
+            <?php if(isset($_GET['updated'])): ?>
+                <p class="alert alert-success">Appointment updated successfully.</p>
             <?php endif; ?>
             <?php if($error != ""): ?>
                 <p class="alert alert-danger">
@@ -460,143 +436,106 @@
                 </p>
             <?php endif; ?>
 
-            <!-- ADD VACCINATION -->
             <div class="box">
 
-                <h3>New Vaccination Record</h3>
+                <h3>Appointment Requests</h3>
 
+                <!-- FILTER -->
                 <form method="post">
 
-                    <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
-
                     <table class="form-table">
-
                         <tr>
-                            <th>Resident</th>
+                            <th>Show Status</th>
                             <td>
-                                <select name="resident_id" class="form-select" required>
-                                    <option value="" disabled <?php if(empty($_POST['resident_id'])) echo 'selected'; ?>>Select Resident</option>
-                                    <?php foreach($residents as $r): ?>
-                            <option value="<?php echo (int)$r['resident_id']; ?>"
-                                <?php if(($_POST['resident_id'] ?? '') == $r['resident_id']) echo 'selected'; ?>>
-                                <?php echo htmlspecialchars($r['first_name'] . " " . $r['last_name'], ENT_QUOTES, 'UTF-8'); ?>
-                            </option>
-                        <?php endforeach; ?>
-                                </select>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Vaccine Type</th>
-                            <td>
-                                <select name="vaccine_name" class="form-select" required>
-                                    <option value="" disabled <?php if(empty($_POST['vaccine_name'])) echo 'selected'; ?>>Select Vaccine</option>
-                                    <?php foreach($vaccines as $v): ?>
-                                        <option value="<?php echo htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); ?>"
-                                            <?php if(($_POST['vaccine_name'] ?? '') == $v) echo 'selected'; ?>>
-                                            <?php echo htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); ?>
+                                <select name="status" class="form-select">
+                                    <?php foreach(['all', 'pending', 'approved', 'rejected', 'completed'] as $s): ?>
+                                        <option value="<?php echo $s; ?>"
+                                            <?php if($filter == $s) echo 'selected'; ?>>
+                                            <?php echo ucfirst($s); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
-                        </tr>
-
-                        <tr>
-                            <th>Dose Number</th>
                             <td>
-                                <input type="number" name="dose_number" class="form-control" min="1" max="10"
-                                       value="<?php echo htmlspecialchars($_POST['dose_number'] ?? '1', ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
+                                <button type="submit" name="filter" class="btn submit-btn">Filter</button>
                             </td>
                         </tr>
-
-                        <tr>
-                            <th>Vaccination Date</th>
-                            <td>
-                                <input type="date" name="vaccination_date" class="form-control"
-                                       max="<?php echo date('Y-m-d'); ?>"
-                                       value="<?php echo htmlspecialchars($_POST['vaccination_date'] ?? date('Y-m-d'), ENT_QUOTES, 'UTF-8'); ?>"
-                                       required>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Next Schedule</th>
-                            <td>
-                                <input type="date" name="next_schedule" class="form-control"
-                                       min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>"
-                                       value="<?php echo htmlspecialchars($_POST['next_schedule'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Completion Status</th>
-                            <td>
-                                <select name="status" class="form-select" required>
-                                    <option value="pending" <?php if(($_POST['status'] ?? 'pending') == 'pending') echo 'selected'; ?>>Pending</option>
-                                    <option value="completed" <?php if(($_POST['status'] ?? '') == 'completed') echo 'selected'; ?>>Completed</option>
-                                </select>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td colspan="2">
-                                <button type="submit" name="submit" class="btn submit-btn">Save Vaccination</button>
-                            </td>
-                        </tr>
-
                     </table>
 
                 </form>
 
-            </div>
-
-            <!-- VACCINATION RECORDS -->
-            <div class="box">
-
-                <h3>Vaccination Records</h3>
-
+                <!-- APPOINTMENT TABLE -->
                 <table class="data-table">
 
                     <tr>
                         <th>ID</th>
                         <th>Resident</th>
-                        <th>Vaccine</th>
-                        <th>Dose</th>
-                        <th>Date</th>
-                        <th>Next Schedule</th>
+                        <th>Service Type</th>
+                        <th>Date and Time</th>
+                        <th>Notes</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
 
-                    <?php if(count($vaccinations) > 0): ?>
+                    <?php $shown = 0; ?>
 
-                        <?php foreach($vaccinations as $row): ?>
-                            <tr>
-                                <td><?php echo (int)$row['vaccination_id']; ?></td>
-                                <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($row['vaccine_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo (int)$row['dose_number']; ?></td>
-                                <td><?php echo date("M d, Y", strtotime($row['vaccination_date'])); ?></td>
-                                <td>
-                                    <?php
-                                        if(!empty($row['next_schedule'])){
-                                            echo date("M d, Y", strtotime($row['next_schedule']));
-                                        }
-                                        else{
-                                            echo "-";
-                                        }
-                                    ?>
-                                </td>
-                                <td><?php echo htmlspecialchars(ucfirst($row['status']), ENT_QUOTES, 'UTF-8'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                    <?php foreach($appointments as $row): ?>
 
-                    <?php else: ?>
+                        <?php
+                            if($filter != 'all' && $row['status'] != $filter){
+                                continue;
+                            }
+                            $shown++;
+                        ?>
 
                         <tr>
-                            <td colspan="7" class="empty">No vaccination records found.</td>
+                            <td><?php echo (int)$row['appointment_id']; ?></td>
+                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($row['service_type'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo date("M d, Y - h:i A", strtotime($row['appointment_date'])); ?></td>
+                            <td><?php echo htmlspecialchars($row['notes'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars(ucfirst($row['status']), ENT_QUOTES, 'UTF-8'); ?></td>
+
+                            <td>
+                                <?php if($row['status'] == 'pending'): ?>
+
+                                    <form method="post">
+                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
+                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
+                                        <input type="hidden" name="new_status" value="approved">
+                                        <button type="submit" name="update_status" class="btn btn-success btn-sm">Approve</button>
+                                    </form>
+
+                                    <form method="post">
+                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
+                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
+                                        <input type="hidden" name="new_status" value="rejected">
+                                        <button type="submit" name="update_status" class="btn btn-danger btn-sm">Reject</button>
+                                    </form>
+
+                                <?php elseif($row['status'] == 'approved'): ?>
+
+                                    <form method="post">
+                                        <input type="hidden" name="nurse_token" value="<?php echo $_SESSION['nurse_token']; ?>">
+                                        <input type="hidden" name="appointment_id" value="<?php echo (int)$row['appointment_id']; ?>">
+                                        <input type="hidden" name="new_status" value="completed">
+                                        <button type="submit" name="update_status" class="btn btn-primary btn-sm">Mark Completed</button>
+                                    </form>
+
+                                <?php else: ?>
+
+                                    -
+
+                                <?php endif; ?>
+                            </td>
                         </tr>
 
+                    <?php endforeach; ?>
+
+                    <?php if($shown == 0): ?>
+                        <tr>
+                            <td colspan="7" class="empty">No appointments found.</td>
+                        </tr>
                     <?php endif; ?>
 
                 </table>
