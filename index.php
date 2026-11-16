@@ -1,57 +1,292 @@
+
 <?php
 session_start();
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-	<title>Welcome | Barangay Ambiong Health System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Welcome | Barangay Tawang Health System</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  	<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-success">
-	<div class="container">
-		<a class="navbar-brand fw-semibold" href="index.php">Barangay Ambiong Health System</a>
-		<div class="d-flex gap-2">
-			<a class="btn btn-outline-light" href="login.php">Login</a>
-			<a class="btn btn-light text-success" href="register.php">Register</a>
-		</div>
-	</div>
+
+<body>
+
+<!-- NAVIGATION BAR -->
+<nav class="navbar navbar-dark bg-success">
+    <div class="container d-flex justify-content-between align-items-center">
+
+        <a class="navbar-brand fw-semibold d-flex align-items-center gap-2"
+           href="index.php">
+
+            <img src="brgylogo.jpg"
+                 alt="Barangay Tawang Logo"
+                 class="barangay-logo">
+
+            <span>Barangay Tawang Health System</span>
+        </a>
+
+        <div class="d-flex gap-2">
+            <a href="login.php"
+               class="btn btn-outline-light btn-sm px-3">
+                Login
+            </a>
+
+            <a href="register.php"
+               class="btn btn-light text-success btn-sm px-3">
+                Register
+            </a>
+        </div>
+
+    </div>
 </nav>
+
 <main>
-	<section class="bg-success text-white py-5">
-		<div class="container py-lg-4">
-			<p class="text-uppercase fw-semibold mb-2">Barangay Ambiong, La Trinidad, Benguet</p>
-			<h1 class="display-5 fw-bold">Health services and community health monitoring</h1>
-			<p class="lead col-lg-8 mt-3">Keep resident health records, vaccinations, maternal and child care, medicine stock, and clinic appointments in one place.</p>
-			<div class="d-flex flex-wrap gap-2 mt-4">
-				<a class="btn btn-light btn-lg text-success" href="login.php">Login</a>
-				<a class="btn btn-outline-light btn-lg" href="register.php">Register as a Resident</a>
-			</div>
-		</div>
-	</section>
-	<section class="container py-5">
-		<h2 class="h3 mb-4">Health services</h2>
-		<div class="row g-3">
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Resident Registration</h3><p class="card-text text-body-secondary">Household and resident records with health profiles and emergency contacts.</p></div></article></div>
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Consultations</h3><p class="card-text text-body-secondary">Symptoms, health worker assessment, and consultation history.</p></div></article></div>
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Vaccination</h3><p class="card-text text-body-secondary">Vaccine records, upcoming schedules, and completion status.</p></div></article></div>
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Maternal and Child Health</h3><p class="card-text text-body-secondary">Pregnancy registry, prenatal visits, and child growth monitoring.</p></div></article></div>
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Medicine Inventory</h3><p class="card-text text-body-secondary">Stock movements, distribution records, and low-stock alerts.</p></div></article></div>
-			<div class="col-md-6 col-lg-4"><article class="card h-100 shadow-sm"><div class="card-body"><h3 class="h5">Appointments</h3><p class="card-text text-body-secondary">Request clinic visits and receive an approved schedule.</p></div></article></div>
-		</div>
-	</section>
-	<section class="bg-white border-top py-4">
-		<div class="container">
-			<h2 class="h4">Who uses the system</h2>
-			<p class="mb-1">System administrators, barangay health workers, health center nurses, municipal health officers, residents, and patients.</p>
-			<p class="text-body-secondary mb-0">Staff accounts are created by the System Administrator. Residents can register their own account.</p>
-		</div>
-	</section>
+
+    <!-- WELCOME SECTION -->
+    <section class="hero-section bg-success text-white">
+        <div class="container">
+
+            <h1 class="mb-3">
+                Health Services and Community Health Monitoring
+            </h1>
+
+            <p class="mb-3">
+                Keep resident health records, vaccinations,
+                maternal and child care, medicine stock,
+                and clinic appointments in one place.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a href="login.php"
+                   class="btn btn-light text-success px-4">
+                    Login
+                </a>
+
+                <a href="register.php"
+                   class="btn btn-outline-light px-4">
+                    Register as a Resident
+                </a>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- HEALTH SERVICES -->
+    <section class="container py-5">
+
+        <div class="mb-4">
+            <h2 class="section-title">Health Services</h2>
+
+            <p class="section-description mb-0">
+                Explore the available health services and
+                features of the Barangay Tawang Health System.
+            </p>
+        </div>
+
+        <div class="row g-3">
+
+            <!-- RESIDENT REGISTRATION -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Resident Registration</h3>
+
+                        <p>
+                            Manage household and resident records,
+                            health profiles, and emergency contacts.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+
+            <!-- CONSULTATIONS -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Consultations</h3>
+
+                        <p>
+                            Record symptoms, health worker assessments,
+                            and consultation history.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+
+            <!-- VACCINATION -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Vaccination</h3>
+
+                        <p>
+                            Track vaccination records, upcoming
+                            schedules, and completion status.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+
+            <!-- MATERNAL AND CHILD HEALTH -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Maternal and Child Health</h3>
+
+                        <p>
+                            Monitor pregnancy records, prenatal
+                            visits, and child growth.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+
+            <!-- MEDICINE INVENTORY -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Medicine Inventory</h3>
+
+                        <p>
+                            Monitor medicine stocks, distribution
+                            records, and low-stock alerts.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+
+            <!-- APPOINTMENTS -->
+            <div class="col-md-6 col-lg-4">
+                <article class="card service-card shadow-sm">
+                    <div class="card-body">
+
+                        <h3>Appointments</h3>
+
+                        <p>
+                            Request clinic visits and receive
+                            approved appointment schedules.
+                        </p>
+
+                    </div>
+                </article>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- SYSTEM USERS -->
+    <section class="users-section py-5">
+        <div class="container">
+
+            <div class="mb-4">
+                <h2 class="section-title">
+                    Who Uses the System?
+                </h2>
+
+                <p class="section-description mb-0">
+                    The system is designed for healthcare
+                    personnel and barangay residents.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <!-- HEALTHCARE PERSONNEL -->
+                <div class="col-md-6">
+                    <article class="card user-card shadow-sm">
+                        <div class="card-body">
+
+                            <h3>Healthcare Personnel</h3>
+
+                            <p class="mb-2">
+                                Authorized users include:
+                            </p>
+
+                            <ul class="mb-3">
+                                <li>System Administrators</li>
+                                <li>Barangay Health Workers</li>
+                                <li>Health Center Nurses</li>
+                                <li>Municipal Health Officers</li>
+                            </ul>
+
+                            <p class="mb-0">
+                                Staff accounts are created by
+                                the System Administrator.
+                            </p>
+
+                        </div>
+                    </article>
+                </div>
+
+
+                <!-- RESIDENTS AND PATIENTS -->
+                <div class="col-md-6">
+                    <article class="card user-card shadow-sm">
+                        <div class="card-body">
+
+                            <h3>Residents and Patients</h3>
+
+                            <p>
+                                Residents can register their own
+                                accounts to access available
+                                barangay health services.
+                            </p>
+
+                            <p class="mb-0">
+                                The system allows residents to
+                                manage their health information,
+                                view available services, and
+                                request clinic appointments.
+                            </p>
+
+                        </div>
+                    </article>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
 </main>
-<footer class="container py-4 text-center text-body-secondary">
-	Barangay Ambiong, La Trinidad, Benguet &middot; Health Services and Community Health Monitoring System
+
+
+<!-- FOOTER -->
+<footer class="container py-4 text-center">
+
+    <p class="mb-1 fw-semibold">
+        Barangay Tawang, La Trinidad, Benguet
+    </p>
+
+    <p class="mb-0">
+        Health Services and Community Health Monitoring System
+    </p>
+
 </footer>
+
 </body>
 </html>
