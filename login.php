@@ -1,59 +1,61 @@
+
 <?php
-    session_start();
-    require_once __DIR__ . "/HealthSystem.php";
+session_start();
+require_once "HealthSystem.php";
 
-    $healthSystem = new HealthSystem($pdo);
+$obj = new HealthSystem($pdo);
+$error = "";
 
-    if(isset($_POST['login_btn'])){
-        $username = trim($_POST['username']);
-        $password = $_POST['password'];
+if(isset($_POST['login_btn'])){
 
-        $result = $healthSystem->login($username);
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-        if(!$result){
-            echo "<script>alert('No active account found');</script>";
-        }
-        else{
-            if(password_verify($password, $result['password'])){
+    $result = $obj->login($username);
 
-                session_regenerate_id(true);
+    if($result){
 
-                $_SESSION["ID"] = $result['user_id'];
-                $_SESSION["USERNAME"] = $result['username'];
-                $_SESSION["ROLE"] = $result['role'];
+        if(password_verify($password, $result['password'])){
 
-                if($result['role'] == "admin"){
-                    header("location:admin/index.php");
-                    exit;
-                }
-                else if($result['role'] == "bhw"){
-                    header("location:bhw/index.php");
-                    exit;
-                }
-                else if($result['role'] == "nurse"){
-                    header("location:nurse/index.php");
-                    exit;
-                }
-                else if($result['role'] == "mho"){
-                    header("location:mho/index.php");
-                    exit;
-                }
-                else if($result['role'] == "resident"){
-                    header("location:resident/index.php");
-                    exit;
-                }
-                else{
-                    session_unset();
-                    echo "<script>alert('Invalid account role');</script>";
-                }
+            session_regenerate_id(true);
+
+            $_SESSION['ID'] = $result['user_id'];
+            $_SESSION['USERNAME'] = $result['username'];
+            $_SESSION['ROLE'] = $result['role'];
+
+            if($result['role'] == 'admin'){
+                header("location:admin/index.php");
+                exit();
+            }
+            else if($result['role'] == 'bhw'){
+                header("location:bhw/index.php");
+                exit();
+            }
+            else if($result['role'] == 'nurse'){
+                header("location:nurse/index.php");
+                exit();
+            }
+            else if($result['role'] == 'mho'){
+                header("location:mho/index.php");
+                exit();
+            }
+            else if($result['role'] == 'resident'){
+                header("location:resident/index.php");
+                exit();
             }
             else{
-                echo "<script>alert('Wrong password');</script>";
+                $error = "Invalid account role.";
             }
         }
+        else{
+            $error = "Incorrect password.";
+        }
     }
+    else{
+        $error = "Account not found or inactive.";
+    }
+}
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -154,7 +156,7 @@
             text-decoration: underline;
         }
 
-        @media(max-width: 600px) {
+        @media(max-width: 600px){
             .login-card .card-body {
                 padding: 25px !important;
                 background-size: 280px;
@@ -181,7 +183,7 @@
 
         <h4 class="login-title">Log In</h4>
 
-        <?php if(!empty($error)): ?>
+        <?php if($error != ""): ?>
             <div class="alert alert-danger">
                 <?php echo htmlspecialchars($error); ?>
             </div>
@@ -212,7 +214,7 @@
             </div>
 
             <button type="submit"
-                    name="login"
+                    name="login_btn"
                     class="btn login-btn w-100">
                 Log In
             </button>
@@ -235,4 +237,3 @@
 
 </body>
 </html>
-
