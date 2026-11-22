@@ -19,4 +19,3 @@
 		die("Database Connection Failed." . $e->getMessage());
 	} 
 ?>
-

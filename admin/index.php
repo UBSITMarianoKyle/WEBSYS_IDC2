@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 require_once __DIR__ . '/../HealthSystem.php';
@@ -23,6 +24,7 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Dashboard | Barangay Tawang Health System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -187,8 +189,7 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
         }
 
         /* MOBILE */
-        @media(max-width: 767px){
-
+        @media(max-width: 767px) {
             .sidebar {
                 min-height: auto;
             }
@@ -209,15 +210,53 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
                 font-size: 14px;
             }
         }
-    
-.card-box { background:white; border-radius:10px; padding:22px; margin-bottom:22px; box-shadow:0 2px 8px #00000012; }
-.card-box h5 { color:#123B70; font-weight:bold; }
-.table thead th { background:#123B70; color:white; }
-.btn-main {background:#123B70; color:white;} .btn-main:hover {background:#244F83; color:white;}
-.stat-number {font-size:32px; font-weight:bold; color:#123B70;}
-@media(max-width:767px){.sidebar{min-height:auto}.main-content{padding:16px}}
-</style>
+
+        .card-box {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+
+        .card-box h5 {
+            color: #123B70;
+            font-weight: bold;
+        }
+
+        .table thead th {
+            background: #123B70;
+            color: white;
+        }
+
+        .btn-main {
+            background: #123B70;
+            color: white;
+        }
+
+        .btn-main:hover {
+            background: #244F83;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #123B70;
+        }
+
+        @media(max-width: 767px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
 </head>
+
 <body>
     <!-- Same navbar as Resident -->
     <nav class="navbar">
@@ -226,6 +265,7 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
                 <img src="../brgylogo.jpg" class="barangay-logo" alt="Barangay Logo">
                 <span>Barangay Tawang Health System</span>
             </a>
+
             <div class="d-flex align-items-center gap-3">
                 <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullname); ?></span>
                 <a href="../logout.php" class="btn logout-btn btn-sm">Logout</a>
@@ -235,24 +275,57 @@ $lowStockCount = (int)$pdo->query('SELECT COUNT(*) FROM medicines WHERE quantity
 
     <div class="container-fluid">
         <div class="row g-0">
+
             <!-- Same sidebar style as Resident -->
             <div class="col-md-3 col-lg-2 sidebar">
                 <h5>Admin Portal</h5>
+
                 <a href="index.php" class="active">Dashboard</a>
-<a href="users.php">Users</a>
-<a href="residents.php">Residents</a>
-<a href="medicines.php">Medicines</a>
-<a href="reports.php">Reports</a>
+                <a href="users.php">Users</a>
+                <a href="residents.php">Residents</a>
+                <a href="medicines.php">Medicines</a>
+                <a href="reports.php">Reports</a>
             </div>
+
             <main class="col-md-9 col-lg-10 main-content">
-                <div class="page-header mb-4"><h2>Admin Dashboard</h2></div>
+                <div class="page-header mb-4">
+                    <h2>Admin Dashboard</h2>
+                </div>
+
                 <div class="row g-3">
-    <div class="col-md-3"><div class="card-box"><h5>Residents</h5><div class="stat-number"><?php echo $residentCount; ?></div></div></div>
-    <div class="col-md-3"><div class="card-box"><h5>Users</h5><div class="stat-number"><?php echo $userCount; ?></div></div></div>
-    <div class="col-md-3"><div class="card-box"><h5>Medicines</h5><div class="stat-number"><?php echo $medicineCount; ?></div></div></div>
-    <div class="col-md-3"><div class="card-box"><h5>Low Stock</h5><div class="stat-number"><?php echo $lowStockCount; ?></div></div></div>
-</div>
-<div class="card-box mt-3"><h5>Welcome, <?php echo htmlspecialchars($fullname); ?>!</h5><p>Choose a menu from the sidebar to manage the barangay health system.</p></div>
+                    <div class="col-md-3">
+                        <div class="card-box">
+                            <h5>Residents</h5>
+                            <div class="stat-number"><?php echo $residentCount; ?></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card-box">
+                            <h5>Users</h5>
+                            <div class="stat-number"><?php echo $userCount; ?></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card-box">
+                            <h5>Medicines</h5>
+                            <div class="stat-number"><?php echo $medicineCount; ?></div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card-box">
+                            <h5>Low Stock</h5>
+                            <div class="stat-number"><?php echo $lowStockCount; ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-box mt-3">
+                    <h5>Welcome, <?php echo htmlspecialchars($fullname); ?>!</h5>
+                    <p>Choose a menu from the sidebar to manage the barangay health system.</p>
+                </div>
             </main>
         </div>
     </div>
