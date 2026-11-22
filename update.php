@@ -92,6 +92,7 @@
         $row['emergency_phone'] = $emergency_phone;
     }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
