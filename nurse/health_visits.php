@@ -1,0 +1,1 @@
+<?php $required_role='nurse'; require __DIR__.'/../visit_module.php'; ?>

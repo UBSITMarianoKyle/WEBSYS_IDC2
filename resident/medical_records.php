@@ -1,0 +1,1 @@
+<?php $required_role='resident'; require __DIR__.'/../patient_module.php'; ?>

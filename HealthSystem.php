@@ -558,10 +558,11 @@
 
         public function change_medicine_stock($medicine_id, $resident_id, $staff_id, $transaction_type, $quantity, $remarks)
         {
+            if($quantity <= 0 || !in_array($transaction_type, ["stock_in", "stock_out"], true)) return false;
             try {
                 $this->pdo->beginTransaction();
 
-                $check = "SELECT quantity FROM medicines WHERE medicine_id = :medicine_id FOR UPDATE";
+                $check = "SELECT quantity, expiration_date FROM medicines WHERE medicine_id = :medicine_id FOR UPDATE";
                 $prep = $this->pdo->prepare($check);
                 $prep->execute([":medicine_id" => $medicine_id]);
                 $medicine = $prep->fetch();
@@ -572,7 +573,7 @@
                 }
 
                 if ($transaction_type == "stock_out") {
-                    if ($medicine['quantity'] < $quantity) {
+                    if ($medicine['quantity'] < $quantity || (!empty($medicine['expiration_date']) && $medicine['expiration_date'] < date('Y-m-d'))) {
                         $this->pdo->rollBack();
                         return false;
                     }
@@ -594,5 +595,25 @@
             }
         }
 
+    public function add_supply($values, $staff = null){
+        $this->pdo->beginTransaction();
+        try {
+        $prep=$this->pdo->prepare("INSERT INTO medicines (medicine_name,category,unit,quantity,minimum_stock,date_procured,procurement_type,source,acquisition_cost,expiration_date,batch_number,remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+        $prep->execute($values);
+        $id = $this->pdo->lastInsertId();
+        if((int)$values[3] > 0 && $staff !== null){
+            $this->add_medicine_transaction($id, null, $staff, 'stock_in', (int)$values[3], 'Initial received stock');
+        }
+        $this->pdo->commit();
+        return true;
+        } catch (Throwable $ex) {
+            if($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $ex;
+        }
+    }
+    public function distribute_supply($id,$qty,$staff,$remarks,$resident){
+        if(!$this->change_medicine_stock($id,$resident,$staff,'stock_out',$qty,$remarks)) throw new PDOException('Stock distribution failed');
+        return true;
+    }
     }
 ?>

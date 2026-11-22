@@ -218,12 +218,12 @@
             }
         }
     </style>
-</head>
+<link rel="stylesheet" href="../mobile_additions.css"></head>
 
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
+<nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
     <div class="container-fluid d-flex justify-content-between align-items-center gap-2">
 
         <a href="index.php"
@@ -414,7 +414,7 @@
                 Barangay Tawang Health System | Resident Portal
             </div>
 
-        </main>
+        <div class="card p-3 mt-3"><h5>Available Medicines</h5><p>Check medicine availability at the health center.</p><a class="btn btn-primary" href="available_medicines.php">View Medicines</a></div></main>
 
     </div>
 </div>

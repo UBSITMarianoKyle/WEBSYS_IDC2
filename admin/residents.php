@@ -214,13 +214,13 @@ $residents = $obj->show_residents();
 .stat-number {font-size:32px; font-weight:bold; color:#123B70;}
 @media(max-width:767px){.sidebar{min-height:auto}.main-content{padding:16px}}
 </style>
-</head>
+<link rel="stylesheet" href="../mobile_additions.css"></head>
 <body>
     <!-- Same navbar as Resident -->
-    <nav class="navbar">
+    <nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
         <div class="container-fluid d-flex justify-content-between align-items-center gap-2">
             <a href="index.php" class="navbar-brand d-flex align-items-center gap-2">
-                <img src="../brgylogo.jpg" class="barangay-logo" alt="Barangay Logo">
+                <img src="../brgylogo.png" class="barangay-logo" alt="Barangay Logo">
                 <span>Barangay Tawang Health System</span>
             </a>
             <div class="d-flex align-items-center gap-3">
@@ -238,9 +238,11 @@ $residents = $obj->show_residents();
                 <a href="index.php">Dashboard</a>
 <a href="users.php">Users</a>
 <a href="residents.php" class="active">Residents</a>
+<a href="households.php">Households</a>
 <a href="medicines.php">Medicines</a>
 <a href="reports.php">Reports</a>
-            </div>
+            <a href="patient_records.php">Patient Records</a>
+</div>
             <main class="col-md-9 col-lg-10 main-content">
                 <div class="page-header mb-4"><h2>Resident Records</h2></div>
                 <div class="card-box"><h5>Registered Residents</h5><div class="table-responsive"><table class="table table-striped table-bordered">

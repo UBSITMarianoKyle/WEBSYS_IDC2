@@ -220,13 +220,13 @@ $lowStock = $pdo->query('SELECT medicine_name, quantity, minimum_stock FROM medi
 .stat-number {font-size:32px; font-weight:bold; color:#123B70;}
 @media(max-width:767px){.sidebar{min-height:auto}.main-content{padding:16px}}
 </style>
-</head>
+<link rel="stylesheet" href="../mobile_additions.css"></head>
 <body>
     <!-- Same navbar as Resident -->
-    <nav class="navbar">
+    <nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
         <div class="container-fluid d-flex justify-content-between align-items-center gap-2">
             <a href="index.php" class="navbar-brand d-flex align-items-center gap-2">
-                <img src="../brgylogo.jpg" class="barangay-logo" alt="Barangay Logo">
+                <img src="../brgylogo.png" class="barangay-logo" alt="Barangay Logo">
                 <span>Barangay Tawang Health System</span>
             </a>
             <div class="d-flex align-items-center gap-3">
@@ -244,9 +244,11 @@ $lowStock = $pdo->query('SELECT medicine_name, quantity, minimum_stock FROM medi
                 <a href="index.php">Dashboard</a>
 <a href="users.php">Users</a>
 <a href="residents.php">Residents</a>
+<a href="households.php">Households</a>
 <a href="medicines.php">Medicines</a>
 <a href="reports.php" class="active">Reports</a>
-            </div>
+            <a href="patient_records.php">Patient Records</a>
+</div>
             <main class="col-md-9 col-lg-10 main-content">
                 <div class="page-header mb-4"><h2>Health Reports</h2></div>
                 <div class="row g-3">
@@ -259,7 +261,7 @@ $lowStock = $pdo->query('SELECT medicine_name, quantity, minimum_stock FROM medi
 </div><div class="card-box mt-3"><h5>Low Stock Medicines</h5><div class="table-responsive"><table class="table table-bordered table-striped"><thead><tr><th>Medicine</th><th>Quantity</th><th>Minimum Stock</th></tr></thead><tbody>
 <?php foreach ($lowStock as $medicine) { ?><tr><td><?php echo htmlspecialchars($medicine['medicine_name']); ?></td><td><?php echo htmlspecialchars($medicine['quantity']); ?></td><td><?php echo htmlspecialchars($medicine['minimum_stock']); ?></td></tr><?php } ?></tbody></table>
 <?php if (empty($lowStock)) { ?><p>No low stock medicines.</p><?php } ?></div></div>
-            </main>
+            <?php require __DIR__.'/../analytics_partial.php'; ?></main>
         </div>
     </div>
 </body>
