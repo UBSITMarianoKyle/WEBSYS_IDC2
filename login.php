@@ -48,11 +48,11 @@ if(isset($_POST['login_btn'])){
             }
         }
         else{
-            $error = "Incorrect password.";
+            $error = "Invalid username or password.";
         }
     }
     else{
-        $error = "Account not found or inactive.";
+        $error = "Invalid username or password.";
     }
 }
 ?>
@@ -163,7 +163,7 @@ if(isset($_POST['login_btn'])){
             }
         }
     </style>
-</head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><style>.password-wrap{position:relative}.password-wrap input{padding-right:48px}.password-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:transparent;color:#123B70;font-size:20px}</style></head>
 
 <body>
 
@@ -207,10 +207,10 @@ if(isset($_POST['login_btn'])){
 
             <div class="mb-3">
                 <label class="form-label">Password</label>
-                <input type="password"
+                <div class="password-wrap"><input type="password" id="password"
                        name="password"
                        class="form-control"
-                       required>
+                       required><button type="button" class="password-eye" aria-label="Show password" onclick="togglePassword(this)"><i class="bi bi-eye"></i></button></div>
             </div>
 
             <button type="submit"
@@ -235,5 +235,5 @@ if(isset($_POST['login_btn'])){
     </div>
 </div>
 
-</body>
+<script>function togglePassword(b){const p=b.parentElement.querySelector("input");p.type=p.type==="password"?"text":"password";b.querySelector("i").className=p.type==="text"?"bi bi-eye-slash":"bi bi-eye";b.setAttribute("aria-label",p.type==="text"?"Hide password":"Show password");}</script></body>
 </html>

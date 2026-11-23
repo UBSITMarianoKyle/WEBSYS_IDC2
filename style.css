@@ -322,3 +322,6 @@ footer p {
     }
 
 }
+
+/* Homepage mobile refinements, original colors retained */
+@media(max-width:576px){body > .navbar .container{flex-wrap:wrap;justify-content:center!important}.navbar-brand{white-space:normal;margin-right:0;line-height:1.25}.navbar-brand img{flex-shrink:0}body > .navbar .container > div{width:100%}body > .navbar .container > div > a{flex:1}.hero-section{margin:14px 12px 0;border-radius:12px;padding:24px 10px}.hero-section h1{font-size:26px}.hero-section .d-flex > a{width:100%}}

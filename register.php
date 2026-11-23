@@ -1,4 +1,6 @@
 <?php
+    session_start();
+    if(empty($_SESSION["register_token"])) $_SESSION["register_token"]=bin2hex(random_bytes(32));
     require_once "HealthSystem.php";
 
     $obj = new HealthSystem($pdo);
@@ -22,7 +24,9 @@
         $emergency_contact = $_POST['emergency_contact'];
         $emergency_phone = $_POST['emergency_phone'];
 
-        if($password != $confirm_password){
+        if(!hash_equals($_SESSION["register_token"], $_POST["register_token"] ?? "")){ $error="Invalid request."; }
+        else if(trim($fname)==="" || trim($lname)==="" || !filter_var($username,FILTER_VALIDATE_EMAIL)){ $error="Enter a valid name and email."; }
+        else if($password != $confirm_password){
             $error = "Passwords do not match.";
         }
         else if(strlen($password) < 8){
@@ -170,7 +174,7 @@
             }
         }
     </style>
-</head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><style>.password-wrap{position:relative}.password-wrap input{padding-right:48px}.password-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:transparent;color:#123B70;font-size:20px}</style></head>
 
 <body>
 
@@ -303,16 +307,16 @@
 
                     <div class="col-md-6">
                         <label class="form-label">Password *</label>
-                        <input type="password" name="password"
+                        <div class="password-wrap"><input type="password" id="password" name="password"
                                class="form-control" minlength="8"
-                               required>
+                               required><button type="button" class="password-eye" aria-label="Show password" onclick="togglePassword(this)"><i class="bi bi-eye"></i></button></div>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Confirm Password *</label>
-                        <input type="password" name="confirm_password"
+                        <div class="password-wrap"><input type="password" id="confirm_password" name="confirm_password"
                                class="form-control" minlength="8"
-                               required>
+                               required><button type="button" class="password-eye" aria-label="Show password" onclick="togglePassword(this)"><i class="bi bi-eye"></i></button></div>
                     </div>
 
                 </div>
@@ -333,5 +337,5 @@
     </div>
 </div>
 
-</body>
+<script>function togglePassword(b){const p=b.parentElement.querySelector("input");p.type=p.type==="password"?"text":"password";b.querySelector("i").className=p.type==="text"?"bi bi-eye-slash":"bi bi-eye";b.setAttribute("aria-label",p.type==="text"?"Hide password":"Show password");}</script></body>
 </html>

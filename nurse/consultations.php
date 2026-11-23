@@ -371,12 +371,12 @@
             }
         }
     </style>
-</head>
+<link rel="stylesheet" href="../mobile_additions.css"></head>
 
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
+<nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
     <div class="container-fluid d-flex justify-content-between align-items-center gap-2">
 
         <a href="index.php"
@@ -427,6 +427,7 @@
             <a href="vaccinations.php">
                 Vaccinations
             </a>
+<a href="health_visits.php">Scheduled Health Visits</a>
 
             <a href="medicines.php">
                 Medicine Inventory

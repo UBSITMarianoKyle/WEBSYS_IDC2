@@ -1,0 +1,2 @@
+<?php function e($v){return htmlspecialchars((string)($v??''),ENT_QUOTES,'UTF-8');} $fullname=$_SESSION['USERNAME']??$role; require __DIR__.'/'. $role .'/module_shell.php'; ?>
+<h2 class="section-title mb-4"><?= e($title) ?></h2>

@@ -177,18 +177,18 @@
             }
         }
     </style>
-</head>
+<link rel="stylesheet" href="../mobile_additions.css"></head>
 
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar">
+<nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
     <div class="container-fluid d-flex justify-content-between align-items-center">
 
         <a href="index.php"
            class="navbar-brand d-flex align-items-center gap-2">
 
-            <img src="../brgylogo.jpg"
+            <img src="../brgylogo.png"
                  class="barangay-logo"
                  alt="Barangay Logo">
 

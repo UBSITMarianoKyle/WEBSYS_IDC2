@@ -1,0 +1,1 @@
+<?php $required_role='admin'; require __DIR__.'/../medical_module.php'; ?>
