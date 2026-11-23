@@ -542,5 +542,57 @@
             return $prep->fetchAll();
         }
 
+
+        public function show_appointments()
+        {
+            $fetch = "SELECT a.*, r.first_name, r.last_name
+                    FROM appointments a
+                    INNER JOIN residents r ON a.resident_id = r.resident_id
+                    ORDER BY a.status = 'pending' DESC, a.appointment_date ASC";
+
+            $prep = $this->pdo->prepare($fetch);
+            $prep->execute();
+
+            return $prep->fetchAll();
+        }
+
+        public function change_medicine_stock($medicine_id, $resident_id, $staff_id, $transaction_type, $quantity, $remarks)
+        {
+            try {
+                $this->pdo->beginTransaction();
+
+                $check = "SELECT quantity FROM medicines WHERE medicine_id = :medicine_id FOR UPDATE";
+                $prep = $this->pdo->prepare($check);
+                $prep->execute([":medicine_id" => $medicine_id]);
+                $medicine = $prep->fetch();
+
+                if (!$medicine) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+
+                if ($transaction_type == "stock_out") {
+                    if ($medicine['quantity'] < $quantity) {
+                        $this->pdo->rollBack();
+                        return false;
+                    }
+                    $update = "UPDATE medicines SET quantity = quantity - :quantity WHERE medicine_id = :medicine_id";
+                } else {
+                    $update = "UPDATE medicines SET quantity = quantity + :quantity WHERE medicine_id = :medicine_id";
+                }
+
+                $prep = $this->pdo->prepare($update);
+                $prep->execute([":quantity" => $quantity, ":medicine_id" => $medicine_id]);
+
+                $this->add_medicine_transaction($medicine_id, $resident_id, $staff_id, $transaction_type, $quantity, $remarks);
+
+                $this->pdo->commit();
+                return true;
+            } catch (PDOException $e) {
+                $this->pdo->rollBack();
+                return false;
+            }
+        }
+
     }
 ?>

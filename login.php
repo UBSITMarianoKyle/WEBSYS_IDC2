@@ -1,155 +1,237 @@
+
 <?php
-    session_start();
-    require_once __DIR__ . "/HealthSystem.php";
+session_start();
+require_once "HealthSystem.php";
 
-    $healthSystem = new HealthSystem($pdo);
+$obj = new HealthSystem($pdo);
+$error = "";
 
-    if(isset($_POST['login_btn'])){
-        $username = trim($_POST['username']);
-        $password = $_POST['password'];
+if(isset($_POST['login_btn'])){
 
-        $result = $healthSystem->login($username);
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-        if(!$result){
-            echo "<script>alert('No active account found');</script>";
-        }
-        else{
-            if(password_verify($password, $result['password'])){
+    $result = $obj->login($username);
 
-                session_regenerate_id(true);
+    if($result){
 
-                $_SESSION["ID"] = $result['user_id'];
-                $_SESSION["USERNAME"] = $result['username'];
-                $_SESSION["ROLE"] = $result['role'];
+        if(password_verify($password, $result['password'])){
 
-                if($result['role'] == "admin"){
-                    header("location:admin/index.php");
-                    exit;
-                }
-                else if($result['role'] == "bhw"){
-                    header("location:bhw/index.php");
-                    exit;
-                }
-                else if($result['role'] == "nurse"){
-                    header("location:nurse/index.php");
-                    exit;
-                }
-                else if($result['role'] == "mho"){
-                    header("location:mho/index.php");
-                    exit;
-                }
-                else if($result['role'] == "resident"){
-                    header("location:resident/index.php");
-                    exit;
-                }
-                else{
-                    session_unset();
-                    echo "<script>alert('Invalid account role');</script>";
-                }
+            session_regenerate_id(true);
+
+            $_SESSION['ID'] = $result['user_id'];
+            $_SESSION['USERNAME'] = $result['username'];
+            $_SESSION['ROLE'] = $result['role'];
+
+            if($result['role'] == 'admin'){
+                header("location:admin/index.php");
+                exit();
+            }
+            else if($result['role'] == 'bhw'){
+                header("location:bhw/index.php");
+                exit();
+            }
+            else if($result['role'] == 'nurse'){
+                header("location:nurse/index.php");
+                exit();
+            }
+            else if($result['role'] == 'mho'){
+                header("location:mho/index.php");
+                exit();
+            }
+            else if($result['role'] == 'resident'){
+                header("location:resident/index.php");
+                exit();
             }
             else{
-                echo "<script>alert('Wrong password');</script>";
+                $error = "Invalid account role.";
             }
         }
+        else{
+            $error = "Incorrect password.";
+        }
     }
+    else{
+        $error = "Account not found or inactive.";
+    }
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Log In | Barangay Tawang Health System</title>
+    <title>Login | Barangay Tawang Health System</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="login.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        .login-card {
+            width: 95%;
+            max-width: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: white;
+        }
+
+        .login-header {
+            background-color: #123B70;
+            color: white;
+            padding: 35px;
+            text-align: center;
+        }
+
+        .login-header img {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 12px;
+        }
+
+        .login-card .card-body {
+            padding: 35px !important;
+
+            background-image:
+                linear-gradient(
+                    rgba(255,255,255,0.88),
+                    rgba(255,255,255,0.88)
+                ),
+                url("brgylogo.png");
+
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 350px;
+            background-color: white;
+        }
+
+        .login-title {
+            color: #123B70;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            font-size: 15px;
+        }
+
+        .form-control {
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        .login-btn {
+            background-color: #123B70;
+            border-color: #123B70;
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        .login-btn:hover {
+            background-color: #0B284D;
+            color: white;
+        }
+
+        .login-links a {
+            color: #123B70;
+            text-decoration: none;
+        }
+
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+
+        @media(max-width: 600px){
+            .login-card .card-body {
+                padding: 25px !important;
+                background-size: 280px;
+            }
+        }
+    </style>
 </head>
 
-<body class="login-page">
+<body>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-7 col-lg-5">
+<div class="card login-card shadow-sm border-0">
 
-            <div class="card login-card shadow-sm">
+    <div class="login-header">
 
-                <div class="login-header">
+        <img src="brgylogo.png" alt="Barangay Tawang Logo">
 
-                    <img src="brgylogo.jpg"
-                         alt="Barangay Tawang Logo"
-                         class="login-logo"
-                         width="80"
-                         height="80">
+        <h3 class="mb-1">Welcome Back!</h3>
 
-                    <h3>Welcome Back!</h3>
+        <p class="mb-0">Barangay Tawang Health System</p>
 
-                    <p class="mb-0">
-                        Barangay Tawang Health System
-                    </p>
+    </div>
 
-                </div>
+    <div class="card-body">
 
-                <div class="card-body p-4">
+        <h4 class="login-title">Log In</h4>
 
-                    <h4 class="card-title mb-3 text-center">
-                        Log In
-                    </h4>
+        <?php if($error != ""): ?>
+            <div class="alert alert-danger">
+                <?php echo htmlspecialchars($error); ?>
+            </div>
+        <?php endif; ?>
 
-                    <form method="post">
+        <?php if(isset($_GET['registered'])): ?>
+            <div class="alert alert-success">
+                Registration successful! Please log in.
+            </div>
+        <?php endif; ?>
 
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Email / Username
-                            </label>
+        <form method="post">
 
-                            <input type="text"
-                                   name="username"
-                                   class="form-control"
-                                   autocomplete="username"
-                                   required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Password
-                            </label>
-
-                            <input type="password"
-                                   name="password"
-                                   class="form-control"
-                                   autocomplete="current-password"
-                                   required>
-                        </div>
-
-                        <button type="submit"
-                                name="login_btn"
-                                class="btn login-btn w-100">
-                            Log In
-                        </button>
-
-                    </form>
-
-                    <p class="text-center mt-3 mb-0">
-                        Don't have an account?
-                        <a href="register.php">Register</a>
-                    </p>
-
-                    <p class="text-center mt-2 mb-0">
-                        <a href="index.php">Back to Home</a>
-                    </p>
-
-                </div>
+            <div class="mb-3">
+                <label class="form-label">Email / Username</label>
+                <input type="text"
+                       name="username"
+                       class="form-control"
+                       required>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password"
+                       name="password"
+                       class="form-control"
+                       required>
+            </div>
+
+            <button type="submit"
+                    name="login_btn"
+                    class="btn login-btn w-100">
+                Log In
+            </button>
+
+        </form>
+
+        <div class="login-links text-center mt-3">
+
+            <p class="mb-2">
+                Don't have an account?
+                <a href="register.php">Register</a>
+            </p>
+
+            <a href="index.php">Back to Home</a>
+
         </div>
+
     </div>
 </div>
 

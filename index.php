@@ -23,7 +23,7 @@ session_start();
         <a class="navbar-brand fw-semibold d-flex align-items-center gap-2"
            href="index.php">
 
-            <img src="brgylogo.jpg"
+            <img src="logo/brgylogo.png"
                  alt="Barangay Tawang Logo"
                  class="barangay-logo">
 
