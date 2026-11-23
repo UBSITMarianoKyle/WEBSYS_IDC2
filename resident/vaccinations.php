@@ -1,4 +1,3 @@
-
 <?php
     session_start();
 
@@ -22,6 +21,7 @@
 
     $vaccinations = $obj->show_resident_vaccinations($resident_id);
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>

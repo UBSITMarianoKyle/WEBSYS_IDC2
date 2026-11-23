@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 require_once __DIR__ . '/../HealthSystem.php';
@@ -13,6 +14,7 @@ $fullname = $_SESSION['USERNAME'] ?? 'Administrator';
 
 $residents = $obj->show_residents();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,6 +22,7 @@ $residents = $obj->show_residents();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Resident Records | Barangay Tawang Health System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -184,8 +187,7 @@ $residents = $obj->show_residents();
         }
 
         /* MOBILE */
-        @media(max-width: 767px){
-
+        @media(max-width: 767px) {
             .sidebar {
                 min-height: auto;
             }
@@ -206,15 +208,53 @@ $residents = $obj->show_residents();
                 font-size: 14px;
             }
         }
-    
-.card-box { background:white; border-radius:10px; padding:22px; margin-bottom:22px; box-shadow:0 2px 8px #00000012; }
-.card-box h5 { color:#123B70; font-weight:bold; }
-.table thead th { background:#123B70; color:white; }
-.btn-main {background:#123B70; color:white;} .btn-main:hover {background:#244F83; color:white;}
-.stat-number {font-size:32px; font-weight:bold; color:#123B70;}
-@media(max-width:767px){.sidebar{min-height:auto}.main-content{padding:16px}}
-</style>
-<link rel="stylesheet" href="../mobile_additions.css"></head>
+
+        .card-box {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+
+        .card-box h5 {
+            color: #123B70;
+            font-weight: bold;
+        }
+
+        .table thead th {
+            background: #123B70;
+            color: white;
+        }
+
+        .btn-main {
+            background: #123B70;
+            color: white;
+        }
+
+        .btn-main:hover {
+            background: #244F83;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #123B70;
+        }
+
+        @media(max-width: 767px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
 <body>
     <!-- Same navbar as Resident -->
     <nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
@@ -223,6 +263,7 @@ $residents = $obj->show_residents();
                 <img src="../brgylogo.png" class="barangay-logo" alt="Barangay Logo">
                 <span>Barangay Tawang Health System</span>
             </a>
+
             <div class="d-flex align-items-center gap-3">
                 <span class="d-none d-md-inline"><?php echo htmlspecialchars($fullname); ?></span>
                 <a href="../logout.php" class="btn logout-btn btn-sm">Logout</a>
@@ -232,31 +273,60 @@ $residents = $obj->show_residents();
 
     <div class="container-fluid">
         <div class="row g-0">
+
             <!-- Same sidebar style as Resident -->
             <div class="col-md-3 col-lg-2 sidebar">
                 <h5>Admin Portal</h5>
+
                 <a href="index.php">Dashboard</a>
-<a href="users.php">Users</a>
-<a href="residents.php" class="active">Residents</a>
-<a href="households.php">Households</a>
-<a href="medicines.php">Medicines</a>
-<a href="reports.php">Reports</a>
-            <a href="patient_records.php">Patient Records</a>
-</div>
+                <a href="users.php">Users</a>
+                <a href="residents.php" class="active">Residents</a>
+                <a href="medicines.php">Medicines</a>
+                <a href="reports.php">Reports</a>
+            </div>
+
             <main class="col-md-9 col-lg-10 main-content">
-                <div class="page-header mb-4"><h2>Resident Records</h2></div>
-                <div class="card-box"><h5>Registered Residents</h5><div class="table-responsive"><table class="table table-striped table-bordered">
-<thead><tr><th>ID</th><th>Name</th><th>Birthday</th><th>Sex</th><th>Address</th><th>Contact</th><th>Health Condition</th></tr></thead>
-<tbody><?php foreach ($residents as $resident) { ?><tr>
-<td><?php echo htmlspecialchars($resident['resident_id']); ?></td>
-<td><?php echo htmlspecialchars($resident['first_name'] . ' ' . $resident['last_name']); ?></td>
-<td><?php echo htmlspecialchars($resident['birth_date'] ?? ''); ?></td>
-<td><?php echo htmlspecialchars($resident['sex'] ?? ''); ?></td>
-<td><?php echo htmlspecialchars($resident['address'] ?? ''); ?></td>
-<td><?php echo htmlspecialchars($resident['contact'] ?? ''); ?></td>
-<td><?php echo htmlspecialchars($resident['health_condition'] ?? ''); ?></td>
-</tr><?php } ?></tbody></table>
-<?php if (empty($residents)) { ?><p>No residents found.</p><?php } ?></div></div>
+                <div class="page-header mb-4">
+                    <h2>Resident Records</h2>
+                </div>
+
+                <div class="card-box">
+                    <h5>Registered Residents</h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Birthday</th>
+                                    <th>Sex</th>
+                                    <th>Address</th>
+                                    <th>Contact</th>
+                                    <th>Health Condition</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <?php foreach ($residents as $resident) { ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($resident['resident_id']); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['first_name'] . ' ' . $resident['last_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['birth_date'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['sex'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['address'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['contact'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($resident['health_condition'] ?? ''); ?></td>
+                                    </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+
+                        <?php if (empty($residents)) { ?>
+                            <p>No residents found.</p>
+                        <?php } ?>
+                    </div>
+                </div>
             </main>
         </div>
     </div>

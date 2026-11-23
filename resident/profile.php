@@ -1,4 +1,3 @@
-
 <?php
     session_start();
 
@@ -22,6 +21,7 @@
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -263,8 +263,8 @@
                 <div class="d-flex justify-content-end mb-3">
 
                     <a href="../update.php?url_id=<?php echo (int)$row['resident_id']; ?>"
-                    class="btn edit-btn">
-                    Edit Profile
+                       class="btn edit-btn">
+                        Edit Profile
                     </a>
 
                 </div>

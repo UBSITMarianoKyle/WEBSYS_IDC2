@@ -1,4 +1,3 @@
-
 <?php
     session_start();
 
@@ -20,6 +19,7 @@
         $fullname = $resident['first_name'] . " " . $resident['last_name'];
     }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>

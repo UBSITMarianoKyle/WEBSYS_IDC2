@@ -1,4 +1,3 @@
-
 <?php
     session_start();
 
@@ -23,6 +22,7 @@
 
     $consultations = $obj->show_resident_consultations($resident_id);
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
