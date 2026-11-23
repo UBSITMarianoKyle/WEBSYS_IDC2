@@ -1,3 +1,4 @@
+
 <?php
     session_start();
 
@@ -79,7 +80,6 @@
 
     $appointments = $obj->show_resident_appointments($resident_id);
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
