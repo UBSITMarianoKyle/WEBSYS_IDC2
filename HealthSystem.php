@@ -3,7 +3,12 @@
 
     class HealthSystem
     {
-        function __construct(private $pdo) {}
+        private $pdo;
+
+        function __construct($pdo)
+        {
+            $this->pdo = $pdo;
+        }
 
         public function register($username, $password, $role)
         {
@@ -615,5 +620,401 @@
         if(!$this->change_medicine_stock($id,$resident,$staff,'stock_out',$qty,$remarks)) throw new PDOException('Stock distribution failed');
         return true;
     }
-    }
+    
+        public function report_pregnancies_count()
+        {
+            $fetch = "SELECT COUNT(*) FROM pregnancies";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_prenatal_visits_count()
+        {
+            $fetch = "SELECT COUNT(*) FROM prenatal_visits";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_child_health_count()
+        {
+            $fetch = "SELECT COUNT(*) FROM child_health";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_health_visits_count()
+        {
+            $fetch = "SELECT COUNT(*) FROM health_visits";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_residentcount()
+        {
+            $fetch = "SELECT COUNT(*) FROM residents";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_usercount()
+        {
+            $fetch = "SELECT COUNT(*) FROM users";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_medicinecount()
+        {
+            $fetch = "SELECT COUNT(*) FROM medicines";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_lowstockcount()
+        {
+            $fetch = "SELECT COUNT(*) FROM medicines
+         WHERE quantity <= minimum_stock";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_vaccinated()
+        {
+            $fetch = "SELECT COUNT(DISTINCT resident_id)
+         FROM vaccinations
+         WHERE LOWER(TRIM(status)) = 'completed'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_appointments()
+        {
+            $fetch = "SELECT status, COUNT(*) AS total
+         FROM appointments
+         GROUP BY status";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_medicines()
+        {
+            $fetch = "SELECT medicine_name, unit, quantity, minimum_stock
+         FROM medicines
+         WHERE category = 'Medicine'
+         ORDER BY quantity ASC
+         LIMIT 10";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_consultations_period($year)
+        {
+            $fetch = "SELECT MONTH(consultation_date) AS month_no,
+                COUNT(*) AS total
+         FROM consultations
+         WHERE YEAR(consultation_date) = ?
+         GROUP BY MONTH(consultation_date)";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$year]);
+            return $result->fetchAll();
+        }
+
+        public function report_medicine_transactions_period($year)
+        {
+            $fetch = "SELECT m.medicine_name, m.unit,
+                SUM(t.quantity) AS total
+         FROM medicine_transactions t
+         JOIN medicines m ON m.medicine_id = t.medicine_id
+         WHERE t.transaction_type = 'stock_out'
+         AND m.category = 'Medicine'
+         AND YEAR(t.transaction_date) = ?
+         GROUP BY m.medicine_name, m.unit
+         ORDER BY m.medicine_name";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$year]);
+            return $result->fetchAll();
+        }
+
+        public function report_malecount()
+        {
+            $fetch = "SELECT COUNT(*) FROM residents
+     WHERE LOWER(TRIM(sex)) = 'male'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_femalecount()
+        {
+            $fetch = "SELECT COUNT(*) FROM residents
+     WHERE LOWER(TRIM(sex)) = 'female'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_householdcount()
+        {
+            $fetch = "SELECT COUNT(*) FROM households";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_vaccinatedcount()
+        {
+            $fetch = "SELECT COUNT(DISTINCT resident_id)
+     FROM vaccinations
+     WHERE LOWER(TRIM(status)) = 'completed'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_medicines_2()
+        {
+            $fetch = "SELECT medicine_name, unit, quantity, minimum_stock
+     FROM medicines
+     WHERE category = 'Medicine'
+     ORDER BY medicine_name";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_consultations_period_2($start, $end)
+        {
+            $fetch = "SELECT MONTH(consultation_date) AS month_no,
+            COUNT(*) AS total
+     FROM consultations
+     WHERE consultation_date >= ?
+     AND consultation_date < ?
+     GROUP BY MONTH(consultation_date)";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchAll();
+        }
+
+        public function report_vaccinations_period($start, $end)
+        {
+            $fetch = "SELECT vaccine_name,
+            COUNT(*) AS total,
+            SUM(CASE WHEN LOWER(TRIM(status)) = 'completed'
+                THEN 1 ELSE 0 END) AS completed
+     FROM vaccinations
+     WHERE vaccination_date >= ?
+     AND vaccination_date < ?
+     GROUP BY vaccine_name
+     ORDER BY vaccine_name";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchAll();
+        }
+
+        public function report_medicine_transactions_period_2($start, $end)
+        {
+            $fetch = "SELECT m.medicine_name, m.unit,
+            SUM(CASE WHEN t.transaction_type = 'stock_in'
+                THEN t.quantity ELSE 0 END) AS stock_in,
+            SUM(CASE WHEN t.transaction_type = 'stock_out'
+                THEN t.quantity ELSE 0 END) AS stock_out
+     FROM medicine_transactions t
+     INNER JOIN medicines m
+     ON t.medicine_id = m.medicine_id
+     WHERE t.transaction_date >= ?
+     AND t.transaction_date < ?
+     AND m.category = 'Medicine'
+     GROUP BY m.medicine_name, m.unit
+     ORDER BY m.medicine_name";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchAll();
+        }
+
+        public function report_pregnancies_period($start, $end)
+        {
+            $fetch = "SELECT COUNT(*) FROM pregnancies
+     WHERE registration_date >= ?
+     AND registration_date < ?";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchColumn();
+        }
+
+        public function report_prenatal_visits_period($start, $end)
+        {
+            $fetch = "SELECT COUNT(*) FROM prenatal_visits
+     WHERE visit_date >= ?
+     AND visit_date < ?";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchColumn();
+        }
+
+        public function report_child_health_period($start, $end)
+        {
+            $fetch = "SELECT COUNT(*) FROM child_health
+     WHERE visit_date >= ?
+     AND visit_date < ?";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchColumn();
+        }
+
+        public function report_health_visits_period($start, $end)
+        {
+            $fetch = "SELECT COUNT(*) FROM health_visits
+     WHERE scheduled_date >= ?
+     AND scheduled_date < ?";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchColumn();
+        }
+
+        public function report_appointments_period($start, $end)
+        {
+            $fetch = "SELECT status, COUNT(*) AS total
+     FROM appointments
+     WHERE appointment_date >= ?
+     AND appointment_date < ?
+     GROUP BY status";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$start, $end]);
+            return $result->fetchAll();
+        }
+
+        public function report_todayconsultations()
+        {
+            $fetch = "SELECT COUNT(*) FROM consultations
+     WHERE consultation_date = CURDATE()";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_pending()
+        {
+            $fetch = "SELECT COUNT(*) FROM appointments
+     WHERE status = 'pending'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_visits()
+        {
+            $fetch = "SELECT COUNT(*) FROM health_visits
+     WHERE scheduled_date >= CURDATE()
+     AND LOWER(status) = 'scheduled'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_vaccinations()
+        {
+            $fetch = "SELECT COUNT(*) FROM vaccinations
+     WHERE next_schedule >= CURDATE()";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_lowstock()
+        {
+            $fetch = "SELECT COUNT(*) FROM medicines
+     WHERE quantity <= minimum_stock
+     AND category = 'Medicine'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_appointments_2()
+        {
+            $fetch = "SELECT status, COUNT(*) AS total
+     FROM appointments
+     GROUP BY status";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_upcomingvaccines()
+        {
+            $fetch = "SELECT vaccine_name, next_schedule,
+            COUNT(*) AS total
+     FROM vaccinations
+     WHERE next_schedule >= CURDATE()
+     GROUP BY vaccine_name, next_schedule
+     ORDER BY next_schedule ASC
+     LIMIT 10";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_upcomingvisits()
+        {
+            $fetch = "SELECT visit_type, scheduled_date,
+            COUNT(*) AS total
+     FROM health_visits
+     WHERE scheduled_date >= CURDATE()
+     AND LOWER(status) = 'scheduled'
+     GROUP BY visit_type, scheduled_date
+     ORDER BY scheduled_date ASC
+     LIMIT 10";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchAll();
+        }
+
+        public function report_consultations_period_3($date)
+        {
+            $fetch = "SELECT COUNT(*) FROM consultations
+         WHERE consultation_date = ?";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$date]);
+            return $result->fetchColumn();
+        }
+
+        public function report_totalvaccinations()
+        {
+            $fetch = "SELECT COUNT(*) FROM vaccinations";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_completedvaccinations()
+        {
+            $fetch = "SELECT COUNT(*) FROM vaccinations
+     WHERE LOWER(TRIM(status)) = 'completed'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_upcomingprenatal()
+        {
+            $fetch = "SELECT COUNT(*) FROM prenatal_visits
+     WHERE next_visit >= CURDATE()";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_upcomingchildvisits()
+        {
+            $fetch = "SELECT COUNT(*) FROM child_health
+     WHERE next_visit >= CURDATE()";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_upcomingappointments()
+        {
+            $fetch = "SELECT COUNT(*) FROM appointments
+     WHERE appointment_date >= NOW()
+     AND status = 'approved'";
+            $result = $this->pdo->query($fetch);
+            return $result->fetchColumn();
+        }
+
+        public function report_consultations_period_4($year)
+        {
+            $fetch = "SELECT MONTH(consultation_date) AS month_no,
+            COUNT(*) AS total
+     FROM consultations
+     WHERE YEAR(consultation_date) = ?
+     GROUP BY MONTH(consultation_date)";
+            $result = $this->pdo->prepare($fetch);
+            $result->execute([$year]);
+            return $result->fetchAll();
+        }
+}
 ?>

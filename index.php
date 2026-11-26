@@ -29,18 +29,6 @@ session_start();
             <span>Barangay Tawang Health System</span>
         </a>
 
-        <div class="d-flex gap-2">
-            <a href="login.php"
-               class="btn btn-outline-light btn-sm px-3">
-                Login
-            </a>
-
-            <a href="register.php"
-               class="btn btn-light text-success btn-sm px-3">
-                Register
-            </a>
-        </div>
-
     </div>
 </nav>
 
