@@ -119,7 +119,6 @@ foreach ($obj->report_appointments_period($start, $end) as $row) {
 $appointmentTotal = 0;
 foreach ($appointments as $total) { $appointmentTotal += $total; }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 

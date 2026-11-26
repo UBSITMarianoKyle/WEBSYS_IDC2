@@ -365,7 +365,6 @@ $maternal['Scheduled Health Visits'] = $obj->report_health_visits_count();
                 <span>Barangay Tawang Health System</span>
 
             </a>
-
             <div class="d-flex align-items-center gap-3">
 
                 <span class="d-none d-md-inline">
