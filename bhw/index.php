@@ -1,420 +1,528 @@
 <?php
 session_start();
-require_once "../HealthSystem.php";
+require_once __DIR__ . '/../HealthSystem.php';
 
-if (!isset($_SESSION["ID"]) || $_SESSION["ROLE"] != "bhw") {
-    header("Location: ../login.php");
+if (!isset($_SESSION['ID']) || !isset($_SESSION['ROLE']) || $_SESSION['ROLE'] !== 'bhw') {
+    header('Location: ../login.php');
     exit();
 }
 
-$healthSystem = new HealthSystem($pdo);
-$stats = $healthSystem->dashboard_stats();
+$obj = new HealthSystem($pdo);
 
-function h($value) {
-    return htmlspecialchars($value ?? "", ENT_QUOTES, "UTF-8");
+$role = 'bhw';
+$title = 'BHW Dashboard';
+$fullname = 'Barangay Health Worker';
+if (isset($_SESSION['USERNAME'])) {
+    $fullname = $_SESSION['USERNAME'];
 }
+
+// Registered residents
+$residents = $obj->report_residentcount();
+
+// Today's consultations
+$todayConsultations = $obj->report_todayconsultations();
+
+// Pending appointments
+$pending = $obj->report_pending();
+
+// Upcoming health visits
+$visits = $obj->report_visits();
+
+// Upcoming vaccinations
+$vaccinations = $obj->report_vaccinations();
+
+// Low-stock medicines
+$lowStock = $obj->report_lowstock();
+
+// Weekly consultations
+$weekly = [];
+
+for ($i = 6; $i >= 0; $i--) {
+
+    $date = date('Y-m-d', strtotime("-$i days"));
+
+    
+
+    $weekly[$date] = (int)$obj->report_consultations_period_3($date);
+}
+
+// Appointment status
+$appointments = $obj->report_appointments_2();
+
+$appointmentTotal = 0;
+foreach ($appointments as $row) { $appointmentTotal += $row['total']; }
+
+// Upcoming vaccination schedules
+$upcomingVaccines = $obj->report_upcomingvaccines();
+
+// Upcoming health visit schedules
+$upcomingVisits = $obj->report_upcomingvisits();
+
+// Summary cards
+$cards = [
+    'Registered Residents' => $residents,
+    "Today's Consultations" => $todayConsultations,
+    'Pending Appointments' => $pending,
+    'Upcoming Health Visits' => $visits
+];
+
+require __DIR__ . '/module_shell.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
+<style>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px #00000012;
+        height: 100%;
+    }
 
-    <title>BHW Dashboard | BHW</title>
+    .stat-number {
+        color: #123B70;
+        font-size: 30px;
+        font-weight: bold;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    .dashboard-card {
+        background: white;
+        padding: 22px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px #00000012;
+    }
 
-    <style>
-        /* GENERAL */
-        body {
-            background: #f8f9fa;
-            font-family: Arial, sans-serif;
+    .dashboard-card h5 {
+        color: #123B70;
+        font-weight: bold;
+        margin-bottom: 18px;
+    }
+
+    .chart-scroll {
+        overflow-x: auto;
+    }
+
+    .weekly-chart {
+        display: flex;
+        align-items: end;
+        gap: 12px;
+        min-width: 350px;
+    }
+
+    .chart-column {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    .chart-track {
+        height: 150px;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .chart-bar {
+        width: 65%;
+        background: #123B70;
+        border-radius: 5px 5px 0 0;
+    }
+
+    .progress {
+        height: 14px;
+        margin-top: 8px;
+    }
+
+    .progress-bar {
+        background: #123B70;
+    }
+
+    .action-btn {
+        background: #123B70;
+        color: white;
+        padding: 12px;
+        display: block;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 6px;
+        height: 100%;
+    }
+
+    .action-btn:hover {
+        background: #244F83;
+        color: white;
+    }
+
+    .task-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    @media(max-width: 767px) {
+
+        .stat-card,
+        .dashboard-card {
+            padding: 15px;
         }
 
-        /* NAVBAR */
-        .navbar {
-            background: #ffeb00;
-            border-bottom: 3px solid #123b70;
-            padding: 10px 20px;
+        .stat-number {
+            font-size: 25px;
         }
 
-        .navbar-brand {
-            color: #123b70;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .barangay-logo {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .logout-btn {
-            border: 1px solid #123b70;
-            color: #123b70;
-        }
-
-        .logout-btn:hover {
-            background: #123b70;
-            color: white;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            background: #123b70;
-            min-height: calc(100vh - 73px);
-            padding: 20px 15px;
-        }
-
-        .sidebar h5 {
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
-
-        .sidebar a {
-            display: block;
-            color: white;
-            text-decoration: none;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            font-size: 15px;
-        }
-
-        .sidebar a:hover {
-            background: #244f83;
-            color: white;
-        }
-
-        .sidebar a.active {
-            background: #ffeb00;
-            color: #123b70;
-            font-weight: bold;
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            padding: 25px;
-        }
-
-        .section-title {
-            color: #123b70;
-            font-size: 23px;
-            font-weight: bold;
-        }
-
-        /* WELCOME SECTION */
-        .hero-section {
-            background: #123b70;
-            color: white;
-            padding: 35px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        .hero-section h1 {
-            font-size: 30px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .hero-section p {
-            font-size: 16px;
-            margin-bottom: 22px;
-        }
-
-        /* DASHBOARD BUTTONS */
-        .action-btn {
-            display: inline-block;
-            padding: 11px 22px;
-            margin-right: 10px;
-            margin-bottom: 5px;
-            border: 2px solid #ffeb00;
-            border-radius: 6px;
-            background: #ffeb00;
-            color: #123b70;
-            font-weight: bold;
-            text-decoration: none;
-            transition: 0.3s ease;
-        }
+    }
 
-        .action-btn:hover {
-            background: #244f83;
-            border-color: #244f83;
-            color: white;
-        }
+</style>
 
-        /* CARDS */
-        .card {
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-        }
+<!-- WELCOME HEADER -->
 
-        .card-header {
-            background: #f1f5fa;
-            color: #123b70;
-        }
+<div class="welcome-header">
 
-        .card h5 {
-            color: #123b70;
-            font-weight: bold;
-        }
+    <h2>BHW Dashboard</h2>
 
-        .card h2 {
-            font-weight: bold;
-        }
+    <p class="mb-1">
+        Community Health Monitoring
+    </p>
 
-        .activity-card {
-            transition: 0.3s ease;
-        }
+    <small>
+        Welcome, <?php echo  htmlspecialchars($fullname) ?>
+    </small>
 
-        .activity-card:hover {
-            border-color: #123b70;
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(18, 59, 112, 0.15);
-        }
+</div>
 
-        /* MOBILE */
-        @media (max-width: 767px) {
+<!-- SUMMARY CARDS -->
 
-            .sidebar {
-                min-height: auto;
-            }
+<div class="row g-3 mb-4">
 
-            .main-content {
-                padding: 15px;
-            }
+    <?php foreach ($cards as $label => $total): ?>
 
-            .hero-section {
-                padding: 25px 20px;
-            }
+        <div class="col-6 col-xl-3">
 
-            .hero-section h1 {
-                font-size: 24px;
-            }
+            <div class="stat-card">
 
-            .action-btn {
-                display: block;
-                text-align: center;
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
-        }
-    </style>
-</head>
+                <small><?php echo  htmlspecialchars($label) ?></small>
 
-<body>
+                <div class="stat-number">
+                    <?php echo  number_format($total) ?>
+                </div>
 
-    <!-- NAVIGATION BAR -->
+            </div>
 
-    <nav class="navbar d-flex align-items-center">
+        </div>
 
-        <a class="navbar-brand d-flex align-items-center gap-2" href="index.php">
+    <?php endforeach; ?>
 
-            <img
-                class="barangay-logo"
-                src="../logo/barangay ambiong health center logo.jpg"
-                alt="Barangay logo"
-            >
+</div>
 
-            Barangay Tawang Health System | BHW
+<!-- WEEKLY CONSULTATION CHART -->
 
-        </a>
+<div class="dashboard-card">
 
-        <a href="../logout.php" class="btn logout-btn ms-auto">
-            Logout
-        </a>
+    <h5>Weekly Consultations</h5>
 
-    </nav>
+    <p class="text-muted small">
+        Patient consultations during the last seven days.
+    </p>
 
-    <div class="container-fluid">
+    <div class="chart-scroll">
 
-        <div class="row">
+        <div class="weekly-chart">
 
-            <!-- SIDEBAR -->
+            <?php foreach ($weekly as $date => $total): ?>
 
-            <aside class="col-md-3 col-lg-2 sidebar">
+                <?php
+                    $height = ($total /
+                        max(1, max($weekly))) * 100;
+                ?>
 
-                <h5>BHW Menu</h5>
+                <div class="chart-column">
 
-                <a class="active" href="index.php">Dashboard</a>
+                    <strong><?php echo  $total ?></strong>
 
-                <a href="residents.php">Residents</a>
+                    <div class="chart-track">
 
-                <a href="consultations.php">Consultations</a>
-
-                <a href="vaccinations.php">Vaccinations</a>
-
-                <a href="maternal_child.php">Maternal & Child</a>
-
-            </aside>
-
-            <!-- MAIN CONTENT -->
-
-            <main class="col-md-9 col-lg-10 main-content">
-
-                <h2 class="section-title mb-4">
-                    BHW Dashboard
-                </h2>
-
-                <!-- WELCOME SECTION -->
-
-                <header class="hero-section">
-
-                    <h1>Welcome to BHW Dashboard!</h1>
-
-                    <p>
-                        Welcome, <?= h($_SESSION["USERNAME"]) ?>!
-                        Manage residents and barangay health services.
-                    </p>
-
-                    <a href="residents.php" class="action-btn">
-                        View Residents
-                    </a>
-
-                    <a href="consultations.php" class="action-btn">
-                        Record Consultation
-                    </a>
-
-                </header>
-
-                <!-- HEALTH SYSTEM OVERVIEW -->
-
-                <h2 class="section-title">
-                    Health System Overview
-                </h2>
-
-                <div class="row g-3 mt-2">
-
-                    <?php
-
-                    $cards = [
-                        "Total Residents" => $stats["total_residents"] ?? 0,
-                        "Consultations" => $stats["total_consultations"] ?? 0,
-                        "Vaccinations" => $stats["total_vaccinations"] ?? 0,
-                        "Ongoing Pregnancies" => $stats["ongoing_pregnancies"] ?? 0,
-                        "Child Health Records" => $stats["child_health_records"] ?? 0,
-                        "Pending Appointments" => $stats["pending_appointments"] ?? 0
-                    ];
-
-                    foreach ($cards as $title => $number):
-
-                    ?>
-
-                        <div class="col-md-4 col-sm-6">
-
-                            <div class="card shadow-sm h-100">
-
-                                <div class="card-body">
-
-                                    <p class="text-muted">
-                                        <?= h($title) ?>
-                                    </p>
-
-                                    <h2 class="text-primary">
-                                        <?= h($number) ?>
-                                    </h2>
-
-                                </div>
-
-                            </div>
+                        <div class="chart-bar"
+                             style="height: <?php echo  $height ?>%">
 
                         </div>
 
-                    <?php endforeach; ?>
+                    </div>
+
+                    <small>
+                        <?php echo  date('D', strtotime($date)) ?>
+                        <br>
+                        <?php echo  date('M d', strtotime($date)) ?>
+                    </small>
 
                 </div>
 
-                <!-- BHW ACTIVITIES -->
-
-                <h2 class="section-title mt-4 mb-3">
-                    BHW Activities
-                </h2>
-
-                <div class="row g-3">
-
-                    <div class="col-md-6">
-
-                        <a
-                            href="residents.php"
-                            class="card card-body activity-card text-decoration-none h-100"
-                        >
-
-                            <h5>Resident Records</h5>
-
-                            <p class="text-muted mb-0">
-                                View registered residents and their information.
-                            </p>
-
-                        </a>
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <a
-                            href="consultations.php"
-                            class="card card-body activity-card text-decoration-none h-100"
-                        >
-
-                            <h5>Consultations</h5>
-
-                            <p class="text-muted mb-0">
-                                Record resident symptoms and treatments.
-                            </p>
-
-                        </a>
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <a
-                            href="vaccinations.php"
-                            class="card card-body activity-card text-decoration-none h-100"
-                        >
-
-                            <h5>Vaccinations</h5>
-
-                            <p class="text-muted mb-0">
-                                Manage vaccination records and schedules.
-                            </p>
-
-                        </a>
-
-                    </div>
-
-                    <div class="col-md-6">
-
-                        <a
-                            href="maternal_child.php"
-                            class="card card-body activity-card text-decoration-none h-100"
-                        >
-
-                            <h5>Maternal and Child Health</h5>
-
-                            <p class="text-muted mb-0">
-                                Monitor pregnancy and child health records.
-                            </p>
-
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </main>
+            <?php endforeach; ?>
 
         </div>
 
     </div>
 
-</body>
+</div>
 
+<div class="row g-3 mb-4">
+
+    <!-- APPOINTMENT STATUS -->
+
+    <div class="col-lg-6">
+
+        <div class="dashboard-card h-100 mb-0">
+
+            <h5>Appointment Status</h5>
+
+            <p class="text-muted small">
+                Total Appointments: <?php echo  $appointmentTotal ?>
+            </p>
+
+            <?php foreach ($appointments as $row): ?>
+
+                <?php
+                    $percent = round(
+                        ($row['total'] /
+                        max(1, $appointmentTotal)) * 100, 1
+                    );
+
+                    $color = '#123B70';
+
+                    if ($row['status'] == 'pending') {
+                        $color = '#E5C900';
+                    } elseif ($row['status'] == 'completed') {
+                        $color = '#198754';
+                    } elseif ($row['status'] == 'rejected') {
+                        $color = '#dc3545';
+                    }
+                ?>
+
+                <div class="d-flex justify-content-between mt-3">
+
+                    <span>
+                        <?php echo  htmlspecialchars(ucfirst($row['status'])) ?>
+                    </span>
+
+                    <span>
+                        <?php echo  $row['total'] ?> (<?php echo  $percent ?>%)
+                    </span>
+
+                </div>
+
+                <div class="progress">
+
+                    <div class="progress-bar"
+                         style="width: <?php echo  $percent ?>%;
+                         background: <?php echo  $color ?>">
+
+                    </div>
+
+                </div>
+
+            <?php endforeach; ?>
+
+            <?php if (empty($appointments)): ?>
+
+                <p>No appointment records available.</p>
+
+            <?php endif; ?>
+
+        </div>
+
+    </div>
+
+    <!-- TASKS REQUIRING ATTENTION -->
+
+    <div class="col-lg-6">
+
+        <div class="dashboard-card h-100 mb-0">
+
+            <h5>Tasks Requiring Attention</h5>
+
+            <div class="task-row">
+                <span>Pending Appointments</span>
+                <strong><?php echo  $pending ?></strong>
+            </div>
+
+            <div class="task-row">
+                <span>Upcoming Vaccinations</span>
+                <strong><?php echo  $vaccinations ?></strong>
+            </div>
+
+            <div class="task-row">
+                <span>Scheduled Health Visits</span>
+                <strong><?php echo  $visits ?></strong>
+            </div>
+
+            <div class="task-row">
+                <span>Low-Stock Medicines</span>
+                <strong class="text-danger"><?php echo  $lowStock ?></strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- UPCOMING VACCINATIONS -->
+
+<div class="dashboard-card">
+
+    <h5>Upcoming Vaccination Schedules</h5>
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-hover">
+
+            <thead>
+
+                <tr>
+                    <th>Vaccine</th>
+                    <th>Schedule</th>
+                    <th>Records</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <?php foreach ($upcomingVaccines as $row): ?>
+
+                    <tr>
+
+                        <td>
+                            <?php echo  htmlspecialchars((string)$row['vaccine_name']) ?>
+                        </td>
+
+                        <td>
+                            <?php echo  htmlspecialchars($row['next_schedule']) ?>
+                        </td>
+
+                        <td><?php echo  $row['total'] ?></td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                <?php if (empty($upcomingVaccines)): ?>
+
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            No upcoming vaccinations.
+                        </td>
+                    </tr>
+
+                <?php endif; ?>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- UPCOMING HEALTH VISITS -->
+
+<div class="dashboard-card">
+
+    <h5>Scheduled Health Visits</h5>
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-hover">
+
+            <thead>
+
+                <tr>
+                    <th>Visit Type</th>
+                    <th>Scheduled Date</th>
+                    <th>Total</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <?php foreach ($upcomingVisits as $row): ?>
+
+                    <tr>
+
+                        <td>
+                            <?php echo  htmlspecialchars((string)$row['visit_type']) ?>
+                        </td>
+
+                        <td>
+                            <?php echo  htmlspecialchars($row['scheduled_date']) ?>
+                        </td>
+
+                        <td><?php echo  $row['total'] ?></td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                <?php if (empty($upcomingVisits)): ?>
+
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            No upcoming health visits.
+                        </td>
+                    </tr>
+
+                <?php endif; ?>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+
+<div class="dashboard-card">
+
+    <h5>Quick Actions</h5>
+
+    <div class="row g-3">
+
+        <div class="col-6 col-lg-3">
+            <a href="consultations.php" class="action-btn">
+                Add Consultation
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="appointments.php" class="action-btn">
+                Manage Appointments
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="medical_supplies.php" class="action-btn">
+                Medical Supplies
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="health_visits.php" class="action-btn">
+                Health Visits
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+</main>
+</div>
+</div>
+
+</body>
 </html>

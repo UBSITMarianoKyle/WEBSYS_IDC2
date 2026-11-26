@@ -1,562 +1,546 @@
 <?php
-    session_start();
+session_start();
+require_once __DIR__ . '/../HealthSystem.php';
 
-    require_once __DIR__ . "/../HealthSystem.php";
+if (!isset($_SESSION['ID']) || !isset($_SESSION['ROLE']) || $_SESSION['ROLE'] !== 'nurse') {
+    header('Location: ../login.php');
+    exit();
+}
 
-    if(!isset($_SESSION['ID']) || ($_SESSION['ROLE'] ?? '') != 'nurse'){
-        header("location: ../login.php");
-        exit();
-    }
+$obj = new HealthSystem($pdo);
 
-    $obj = new HealthSystem($pdo);
+$role = 'nurse';
+$title = 'Nurse Dashboard';
+$fullname = 'Nurse';
+if (isset($_SESSION['USERNAME'])) {
+    $fullname = $_SESSION['USERNAME'];
+}
 
-    $fullname = $_SESSION['USERNAME'] ?? 'Nurse';
+$year = (int)date('Y');
 
-    $stats = $obj->dashboard_stats();
-    $low_stock = $obj->show_low_stock();
+// Today's consultations
+$consultations = $obj->report_todayconsultations();
+
+// Vaccination records
+$totalVaccinations = $obj->report_totalvaccinations();
+
+$completedVaccinations = $obj->report_completedvaccinations();
+
+$notCompleted = $totalVaccinations - $completedVaccinations;
+
+$completionRate = 0;
+
+if ($totalVaccinations > 0) {
+    $completionRate = round(
+        ($completedVaccinations / $totalVaccinations) * 100, 1
+    );
+}
+
+// Maternal and child health
+$pregnancies = $obj->report_pregnancies_count();
+
+$prenatal = $obj->report_prenatal_visits_count();
+
+$children = $obj->report_child_health_count();
+
+$healthVisits = $obj->report_health_visits_count();
+
+// Upcoming health schedules
+$upcomingVaccinations = $obj->report_vaccinations();
+
+$upcomingPrenatal = $obj->report_upcomingprenatal();
+
+$upcomingChildVisits = $obj->report_upcomingchildvisits();
+
+$upcomingAppointments = $obj->report_upcomingappointments();
+
+// Monthly consultations
+
+
+$monthly = [];
+for ($i = 1; $i <= 12; $i++) { $monthly[$i] = 0; }
+
+foreach ($obj->report_consultations_period_4($year) as $row) {
+    $monthly[(int)$row['month_no']] = (int)$row['total'];
+}
+
+// Upcoming vaccination schedules
+$vaccineSchedules = $obj->report_upcomingvaccines();
+
+// Dashboard cards
+$cards = [
+    "Today's Consultations" => $consultations,
+    'Completed Vaccinations' => $completedVaccinations,
+    'Pregnancy Registrations' => $pregnancies,
+    'Child Health Records' => $children
+];
+
+$maternal = [
+    'Pregnancy Registrations' => $pregnancies,
+    'Prenatal Visits' => $prenatal,
+    'Child Health Records' => $children,
+    'Health Visit Records' => $healthVisits
+];
+
+$schedules = [
+    'Vaccination Schedules' => $upcomingVaccinations,
+    'Prenatal Checkups' => $upcomingPrenatal,
+    'Child Health Visits' => $upcomingChildVisits,
+    'Approved Appointments' => $upcomingAppointments
+];
+
+require __DIR__ . '/module_shell.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
 
-    <title>Nurse Dashboard | Barangay Tawang Health System</title>
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px #00000012;
+        height: 100%;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: Arial, sans-serif;
-        }
+    .stat-number {
+        color: #123B70;
+        font-size: 30px;
+        font-weight: bold;
+    }
 
-        /* NAVBAR */
-        .navbar {
-            background-color: #FFEB00;
-            border-bottom: 3px solid #123B70;
-            padding: 10px 20px;
-        }
+    .dashboard-card {
+        background: white;
+        padding: 22px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px #00000012;
+    }
 
-        .navbar-brand {
-            color: #123B70;
-            font-size: 18px;
-            font-weight: bold;
-            text-decoration: none;
-        }
+    .dashboard-card h5 {
+        color: #123B70;
+        font-weight: bold;
+        margin-bottom: 18px;
+    }
 
-        .barangay-logo {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
+    .coverage-ring {
+        width: 160px;
+        height: 160px;
+        margin: 20px auto;
+        border-radius: 50%;
+        background: conic-gradient(
+            #123B70 var(--rate),
+            #E5C900 0
+        );
+        display: grid;
+        place-items: center;
+    }
 
-        .logout-btn {
-            border: 1px solid #123B70;
-            color: #123B70;
-        }
+    .coverage-ring strong {
+        background: white;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+        color: #123B70;
+    }
 
-        .logout-btn:hover {
-            background-color: #123B70;
-            color: white;
-        }
+    .progress {
+        height: 14px;
+        margin-top: 8px;
+    }
 
-        /* SIDEBAR */
-        .sidebar {
-            background-color: #123B70;
-            min-height: calc(100vh - 73px);
-            padding: 20px 15px;
-        }
+    .progress-bar {
+        background: #123B70;
+    }
 
-        .sidebar h5 {
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
+    .chart-scroll {
+        overflow-x: auto;
+    }
 
-        .sidebar a {
-            display: block;
-            color: white;
-            text-decoration: none;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            font-size: 15px;
-        }
+    .month-chart {
+        display: flex;
+        align-items: end;
+        gap: 8px;
+        min-width: 480px;
+    }
 
-        .sidebar a:hover {
-            background-color: #244F83;
-        }
+    .month-column {
+        flex: 1;
+        text-align: center;
+        font-size: 12px;
+    }
 
-        .sidebar a.active {
-            background-color: #FFEB00;
-            color: #123B70;
-            font-weight: bold;
-        }
+    .month-track {
+        height: 150px;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        border-bottom: 1px solid #ddd;
+    }
 
-        /* MAIN CONTENT */
-        .main-content {
-            padding: 25px;
-        }
+    .month-bar {
+        background: #123B70;
+        width: 65%;
+        border-radius: 4px 4px 0 0;
+    }
 
-        .main-content h2,
-        .main-content h3 {
-            color: #123B70;
-        }
+    .action-btn {
+        background: #123B70;
+        color: white;
+        padding: 12px;
+        display: block;
+        text-decoration: none;
+        text-align: center;
+        border-radius: 6px;
+        height: 100%;
+    }
 
-        .main-content h2 {
-            font-size: 26px;
-            font-weight: bold;
-        }
+    .action-btn:hover {
+        background: #244F83;
+        color: white;
+    }
 
-        .welcome-header {
-            background-color: #123B70;
-            color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
+    @media(max-width: 767px) {
 
-        .welcome-header h2 {
-            color: white;
-            font-size: 26px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .welcome-header p {
-            margin-bottom: 0;
-            font-size: 15px;
-        }
-
-        .section-title {
-            color: #123B70;
-            font-size: 23px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-
-        .section-description {
-            color: #6c757d;
-            margin-bottom: 20px;
-        }
-
-        /* CARDS */
-        .box {
-            background-color: white;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 22px;
-            margin-bottom: 22px;
-            box-shadow: 0 2px 8px #00000012;
-        }
-
-        .box:has(.data-table) {
-            overflow-x: auto;
-        }
-
-        .box h3 {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .service-card {
-            background-color: white;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            height: 100%;
-            transition: 0.2s;
-        }
-
-        .service-card:hover {
-            border-color: #123B70;
-        }
-
-        .service-card .card-body {
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .service-card h5 {
-            color: #123B70;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .service-card p {
-            color: #6c757d;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .service-btn {
-            background-color: #123B70;
-            color: white;
-            padding: 10px 15px;
-            margin-top: auto;
-            border-radius: 6px;
-        }
-
-        .service-btn:hover {
-            background-color: #0B284D;
-            color: white;
+        .stat-card,
+        .dashboard-card {
+            padding: 15px;
         }
 
         .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #123B70;
+            font-size: 25px;
         }
 
-        /* FORM TABLE */
-        .form-table {
-            width: 100%;
-        }
+    }
 
-        .form-table th {
-            width: 220px;
-            text-align: left;
-            color: #123B70;
-            padding: 8px;
-            vertical-align: top;
-        }
+</style>
 
-        .form-table td {
-            padding: 8px;
-        }
+<!-- WELCOME HEADER -->
 
-        /* DATA TABLE */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+<div class="welcome-header">
 
-        .data-table th {
-            background-color: #123B70;
-            color: white;
-            padding: 8px;
-            border: 1px solid #dee2e6;
-            text-align: left;
-        }
+    <h2>Nurse Dashboard</h2>
 
-        .data-table td {
-            padding: 8px;
-            border: 1px solid #dee2e6;
-            vertical-align: middle;
-        }
+    <p class="mb-1">
+        Patient Care and Clinical Health Monitoring
+    </p>
 
-        .data-table tr:nth-child(even) {
-            background-color: #f1f4f8;
-        }
+    <small>
+        Welcome, <?php echo  htmlspecialchars($fullname) ?>
+    </small>
 
-        .data-table form {
-            display: inline-block;
-            margin: 0 4px 4px 0;
-        }
+</div>
 
-        .empty {
-            text-align: center;
-            color: #6c757d;
-            padding: 20px;
-        }
+<!-- SUMMARY CARDS -->
 
-        .submit-btn {
-            background-color: #123B70;
-            color: white;
-        }
+<div class="row g-3 mb-4">
 
-        .submit-btn:hover {
-            background-color: #0B284D;
-            color: white;
-        }
+    <?php foreach ($cards as $label => $total): ?>
 
-        /* FOOTER */
-        .dashboard-footer {
-            margin-top: 35px;
-            padding: 15px 0;
-            color: #6c757d;
-            font-size: 13px;
-            border-top: 1px solid #dee2e6;
-        }
+        <div class="col-6 col-xl-3">
 
-        /* MOBILE */
-        @media(max-width: 767px){
+            <div class="stat-card">
 
-            .sidebar {
-                min-height: auto;
-            }
+                <small><?php echo  htmlspecialchars($label) ?></small>
 
-            .main-content {
-                padding: 20px 15px;
-            }
+                <div class="stat-number">
+                    <?php echo  number_format($total) ?>
+                </div>
 
-            .welcome-header {
-                padding: 20px;
-            }
-
-            .welcome-header h2 {
-                font-size: 23px;
-            }
-
-            .navbar-brand {
-                font-size: 14px;
-            }
-
-            .form-table th {
-                width: auto;
-            }
-        }
-    </style>
-<link rel="stylesheet" href="../mobile_additions.css"></head>
-
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar"><button type="button" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false" onclick="document.body.classList.toggle('menu-open');this.setAttribute('aria-expanded',document.body.classList.contains('menu-open'))">☰</button>
-    <div class="container-fluid d-flex justify-content-between align-items-center gap-2">
-
-        <a href="index.php"
-           class="navbar-brand d-flex align-items-center gap-2">
-
-            <img src="../logo/brgylogo.jpg"
-                 class="barangay-logo"
-                 alt="Barangay Logo">
-
-            <span>Barangay Tawang Health System</span>
-        </a>
-
-        <div class="d-flex align-items-center gap-3">
-
-            <span class="d-none d-md-inline">
-                <?php echo htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8'); ?>
-            </span>
-
-            <a href="../logout.php" class="btn logout-btn btn-sm">
-                Logout
-            </a>
+            </div>
 
         </div>
+
+    <?php endforeach; ?>
+
+</div>
+
+<!-- MONTHLY CONSULTATIONS -->
+
+<div class="dashboard-card">
+
+    <h5>Monthly Consultations (<?php echo  $year ?>)</h5>
+
+    <p class="text-muted small">
+        Total consultations recorded by month.
+    </p>
+
+    <div class="chart-scroll">
+
+        <div class="month-chart">
+
+            <?php foreach ($monthly as $month => $total): ?>
+
+                <?php
+                    $height = ($total /
+                        max(1, max($monthly))) * 100;
+                ?>
+
+                <div class="month-column">
+
+                    <strong><?php echo  $total ?></strong>
+
+                    <div class="month-track">
+
+                        <div class="month-bar"
+                             style="height: <?php echo  $height ?>%">
+
+                        </div>
+
+                    </div>
+
+                    <small>
+                        <?php echo  date('M', mktime(0, 0, 0, $month, 1)) ?>
+                    </small>
+
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
     </div>
-</nav>
 
-<!-- PAGE LAYOUT -->
-<div class="container-fluid">
-    <div class="row g-0">
+</div>
 
-        <!-- SIDEBAR -->
-        <div class="col-md-3 col-lg-2 sidebar">
+<div class="row g-3 mb-4">
 
-            <h5>Nurse Portal</h5>
+    <!-- VACCINATION COMPLETION RATE -->
 
-            <a href="index.php" class="active">
-                Dashboard
-            </a>
+    <div class="col-lg-6">
 
-            <a href="appointments.php">
-                Appointments
-            </a>
+        <div class="dashboard-card h-100 mb-0">
 
-            <a href="consultations.php">
-                Consultations
-            </a>
+            <h5>Vaccination Completion Rate</h5>
 
-            <a href="vaccinations.php">
-                Vaccinations
-            </a>
-<a href="health_visits.php">Scheduled Health Visits</a>
+            <div class="coverage-ring"
+                 style="--rate: <?php echo  $completionRate ?>%;
+                 <?php if ($totalVaccinations == 0) { echo 'background:#e9ecef;'; } ?>">
 
-            <a href="medicines.php">
-                Medicine Inventory
-            </a>
+                <strong>
+
+                    <?php if ($totalVaccinations > 0) { echo $completionRate . '%'; } else { echo 'N/A'; } ?>
+
+                </strong>
+
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+
+                <span>Completed Vaccinations</span>
+
+                <strong><?php echo  $completedVaccinations ?></strong>
+
+            </div>
+
+            <div class="d-flex justify-content-between mb-2">
+
+                <span>Not Completed</span>
+
+                <strong><?php echo  $notCompleted ?></strong>
+
+            </div>
+
+            <div class="d-flex justify-content-between">
+
+                <span>Total Vaccination Records</span>
+
+                <strong><?php echo  $totalVaccinations ?></strong>
+
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                Completion rate is based on vaccination records,
+                not the percentage of fully immunized residents.
+            </p>
 
         </div>
 
-        <!-- MAIN CONTENT -->
-        <main class="col-md-9 col-lg-10 main-content">
+    </div>
 
-            <!-- WELCOME HEADER -->
-            <div class="welcome-header">
+    <!-- MATERNAL AND CHILD HEALTH -->
 
-                <h2>
-                    Welcome, <?php echo htmlspecialchars($fullname, ENT_QUOTES, 'UTF-8'); ?>!
-                </h2>
+    <div class="col-lg-6">
 
-                <p>
-                    Manage appointments, consultations, vaccinations, and medicine stock.
-                </p>
+        <div class="dashboard-card h-100 mb-0">
 
-            </div>
+            <h5>Maternal and Child Health</h5>
 
-            <!-- NURSE SERVICES -->
-            <div class="mb-4">
+            <p class="text-muted small">
+                Total recorded health services.
+            </p>
 
-                <h3 class="section-title">
-                    Nurse Services
-                </h3>
+            <?php foreach ($maternal as $label => $total): ?>
 
-                <p class="section-description">
-                    Select a service to manage records and requests.
-                </p>
+                <?php
+                    $percent = ($total /
+                        max(1, max($maternal))) * 100;
+                ?>
 
-                <div class="row g-3">
+                <div class="d-flex justify-content-between mt-3">
 
-                    <!-- APPOINTMENTS -->
-                    <div class="col-md-6 col-xl-3">
-                        <div class="card service-card shadow-sm">
-                            <div class="card-body">
-                                <h5>Appointments</h5>
-                                <p>
-                                    Approve or reject appointment requests
-                                    from residents.
-                                </p>
-                                <a href="appointments.php"
-                                   class="btn service-btn w-100">
-                                    Manage Appointments
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    <span><?php echo  $label ?></span>
 
-                    <!-- CONSULTATIONS -->
-                    <div class="col-md-6 col-xl-3">
-                        <div class="card service-card shadow-sm">
-                            <div class="card-body">
-                                <h5>Consultations</h5>
-                                <p>
-                                    Record symptoms, assessments,
-                                    and treatments.
-                                </p>
-                                <a href="consultations.php"
-                                   class="btn service-btn w-100">
-                                    Manage Consultations
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    <strong><?php echo  $total ?></strong>
 
-                    <!-- VACCINATIONS -->
-                    <div class="col-md-6 col-xl-3">
-                        <div class="card service-card shadow-sm">
-                            <div class="card-body">
-                                <h5>Vaccinations</h5>
-                                <p>
-                                    Record vaccines, doses, next schedules,
-                                    and completion status.
-                                </p>
-                                <a href="vaccinations.php"
-                                   class="btn service-btn w-100">
-                                    Manage Vaccinations
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- MEDICINES -->
-                    <div class="col-md-6 col-xl-3">
-                        <div class="card service-card shadow-sm">
-                            <div class="card-body">
-                                <h5>Medicine Inventory</h5>
-                                <p>
-                                    Record stock-in, stock-out,
-                                    and medicine distribution.
-                                </p>
-                                <a href="medicines.php"
-                                   class="btn service-btn w-100">
-                                    Manage Medicines
-                                </a>
-                            </div>
-                        </div>
+                <div class="progress">
+
+                    <div class="progress-bar"
+                         style="width: <?php echo  $percent ?>%">
+
                     </div>
 
                 </div>
-            </div>
 
-            <!-- SUMMARY -->
-            <div class="row g-3 mb-4">
+            <?php endforeach; ?>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Pending Appointments</h3>
-                        <div class="stat-number"><?php echo (int)$stats['pending_appointments']; ?></div>
-                    </div>
-                </div>
+        </div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Total Consultations</h3>
-                        <div class="stat-number"><?php echo (int)$stats['total_consultations']; ?></div>
-                    </div>
-                </div>
+    </div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Vaccination Records</h3>
-                        <div class="stat-number"><?php echo (int)$stats['total_vaccinations']; ?></div>
-                    </div>
-                </div>
+</div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="box mb-0">
-                        <h3>Low-Stock Medicines</h3>
-                        <div class="stat-number"><?php echo (int)$stats['low_stock']; ?></div>
-                    </div>
-                </div>
+<!-- UPCOMING HEALTH SCHEDULES -->
 
-            </div>
+<div class="dashboard-card">
 
-            <!-- LOW STOCK -->
-            <div class="box">
+    <h5>Upcoming Health Schedules</h5>
 
-                <h3>Low-Stock Medicines</h3>
+    <div class="table-responsive">
 
-                <table class="data-table">
+        <table class="table table-bordered table-hover">
+
+            <thead>
+
+                <tr>
+                    <th>Health Service</th>
+                    <th>Scheduled Records</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <?php foreach ($schedules as $label => $total): ?>
 
                     <tr>
-                        <th>Medicine</th>
-                        <th>Unit</th>
-                        <th>Quantity</th>
-                        <th>Minimum Stock</th>
+
+                        <td><?php echo  $label ?></td>
+
+                        <td><?php echo  $total ?></td>
+
                     </tr>
 
-                    <?php if(count($low_stock) > 0): ?>
+                <?php endforeach; ?>
 
-                        <?php foreach($low_stock as $row): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['medicine_name'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($row['unit'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo (int)$row['quantity']; ?></td>
-                                <td><?php echo (int)$row['minimum_stock']; ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+            </tbody>
 
-                    <?php else: ?>
-
-                        <tr>
-                            <td colspan="4" class="empty">All medicines are above minimum stock.</td>
-                        </tr>
-
-                    <?php endif; ?>
-
-                </table>
-
-            </div>
-
-            <!-- FOOTER -->
-            <div class="dashboard-footer">
-                Barangay Tawang Health System | Nurse Portal
-            </div>
-
-        </main>
+        </table>
 
     </div>
+
+</div>
+
+<!-- UPCOMING VACCINATION DETAILS -->
+
+<div class="dashboard-card">
+
+    <h5>Upcoming Vaccination Details</h5>
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-hover">
+
+            <thead>
+
+                <tr>
+                    <th>Vaccine Type</th>
+                    <th>Next Schedule</th>
+                    <th>Total Records</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <?php foreach ($vaccineSchedules as $row): ?>
+
+                    <tr>
+
+                        <td>
+                            <?php echo  htmlspecialchars((string)$row['vaccine_name']) ?>
+                        </td>
+
+                        <td>
+                            <?php echo  htmlspecialchars($row['next_schedule']) ?>
+                        </td>
+
+                        <td><?php echo  $row['total'] ?></td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                <?php if (empty($vaccineSchedules)): ?>
+
+                    <tr>
+                        <td colspan="3" class="text-center">
+                            No upcoming vaccination schedules.
+                        </td>
+                    </tr>
+
+                <?php endif; ?>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+
+<div class="dashboard-card">
+
+    <h5>Quick Actions</h5>
+
+    <div class="row g-3">
+
+        <div class="col-6 col-lg-3">
+            <a href="consultations.php" class="action-btn">
+                Patient Consultations
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="vaccinations.php" class="action-btn">
+                Vaccination Records
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="appointments.php" class="action-btn">
+                Appointments
+            </a>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <a href="health_visits.php" class="action-btn">
+                Health Visits
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+</main>
+</div>
 </div>
 
 </body>
